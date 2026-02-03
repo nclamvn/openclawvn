@@ -1,0 +1,190 @@
+{
+  "$schema": "https://openclaw.ai/schema/config.json",
+  "meta": {
+    "description": "OpenClaw config optimized for Vietnam market",
+    "lastTouchedAt": "2026-02-03T00:00:00Z"
+  },
+
+  "agents": {
+    "defaults": {
+      "userTimezone": "Asia/Ho_Chi_Minh",
+      "timeFormat": "24",
+      "envelopeTimezone": "user",
+
+      "model": {
+        "primary": "anthropic/claude-sonnet-4-5",
+        "fallbacks": ["anthropic/claude-haiku-4-5", "openai/gpt-5-mini"]
+      },
+
+      "contextPruning": {
+        "mode": "cache-ttl",
+        "ttl": "1h",
+        "keepLastAssistants": 3,
+        "softTrimRatio": 0.3,
+        "hardClearRatio": 0.5,
+        "minPrunableToolChars": 50000,
+        "softTrim": {
+          "maxChars": 4000,
+          "headChars": 1500,
+          "tailChars": 1500
+        },
+        "hardClear": {
+          "enabled": true
+        }
+      },
+
+      "compaction": {
+        "mode": "safeguard",
+        "reserveTokensFloor": 20000,
+        "maxHistoryShare": 0.5
+      },
+
+      "heartbeat": {
+        "every": "55m"
+      },
+
+      "thinkingDefault": "low",
+      "contextTokens": 100000
+    }
+  },
+
+  "channels": {
+    "defaults": {
+      "groupPolicy": "allowlist"
+    },
+
+    "zalo": {
+      "enabled": true,
+      "dmPolicy": "pairing"
+    },
+
+    "zalouser": {
+      "enabled": true
+    },
+
+    "telegram": {
+      "enabled": true,
+      "dmPolicy": "pairing"
+    },
+
+    "imessage": {
+      "enabled": true
+    },
+
+    "whatsapp": {
+      "enabled": false
+    },
+
+    "discord": {
+      "enabled": false
+    },
+
+    "signal": {
+      "enabled": false
+    },
+
+    "slack": {
+      "enabled": false
+    },
+
+    "googlechat": {
+      "enabled": false
+    },
+
+    "msteams": {
+      "enabled": false
+    }
+  },
+
+  "messages": {
+    "tts": {
+      "auto": "off",
+      "provider": "edge",
+      "mode": "final",
+      "maxTextLength": 5000,
+      "timeoutMs": 30000,
+
+      "edge": {
+        "enabled": true,
+        "voice": "vi-VN-HoaiMyNeural",
+        "lang": "vi-VN",
+        "rate": "+0%",
+        "pitch": "+0Hz",
+        "volume": "+0%"
+      },
+
+      "elevenlabs": {
+        "languageCode": "vi",
+        "voiceSettings": {
+          "stability": 0.5,
+          "similarityBoost": 0.75,
+          "speed": 1.0
+        }
+      },
+
+      "openai": {
+        "model": "gpt-4o-mini-tts",
+        "voice": "nova"
+      }
+    }
+  },
+
+  "browser": {
+    "enabled": true,
+    "provider": "playwright",
+    "headless": true
+  },
+
+  "plugins": {
+    "enabled": [
+      "zalo",
+      "zalouser",
+      "memory-lancedb"
+    ],
+
+    "disabled": [
+      "msteams",
+      "matrix",
+      "nostr",
+      "tlon",
+      "twitch",
+      "bluebubbles",
+      "mattermost",
+      "nextcloud-talk",
+      "voice-call",
+      "googlechat"
+    ]
+  },
+
+  "skills": {
+    "disabled": [
+      "spotify-player",
+      "apple-notes",
+      "apple-reminders",
+      "bear-notes",
+      "things-mac",
+      "bluebubbles",
+      "imsg",
+      "gog",
+      "bird",
+      "blucli"
+    ]
+  },
+
+  "tools": {
+    "memorySearch": {
+      "enabled": true,
+      "provider": "lancedb"
+    }
+  },
+
+  "logging": {
+    "level": "info",
+    "redactSensitive": "tools"
+  },
+
+  "gateway": {
+    "mode": "local",
+    "port": 18789
+  }
+}

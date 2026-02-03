@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxfmt/configuration_schema.json",
+  "ignorePatterns": [
+    "apps/",
+    "assets/",
+    "dist/",
+    "docs/_layouts/",
+    "node_modules/",
+    "patches/",
+    "pnpm-lock.yaml/",
+    "Swabble/",
+    "vendor/",
+  ],
+}

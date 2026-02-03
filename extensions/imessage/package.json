@@ -1,0 +1,11 @@
+{
+  "name": "@openclaw/imessage",
+  "version": "2026.1.30",
+  "description": "OpenClaw iMessage channel plugin",
+  "type": "module",
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}
