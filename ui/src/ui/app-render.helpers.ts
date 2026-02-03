@@ -203,7 +203,7 @@ function resolveSessionOptions(
   return options;
 }
 
-const THEME_ORDER: ThemeMode[] = ["system", "light", "dark"];
+const THEME_ORDER: ThemeMode[] = ["light", "dark"];
 
 export function renderThemeToggle(state: AppViewState) {
   const themeIndex = Math.max(0, THEME_ORDER.indexOf(state.theme));
@@ -256,15 +256,6 @@ export function renderThemeToggle(state: AppViewState) {
         <!-- Theme group -->
         <div class="settings-toggle__group" role="group" aria-label="Theme">
           <span class="settings-toggle__indicator settings-toggle__indicator--theme"></span>
-          <button
-            class="settings-toggle__button ${state.theme === "system" ? "active" : ""}"
-            @click=${applyTheme("system")}
-            aria-pressed=${state.theme === "system"}
-            aria-label=${t().theme.system}
-            title="System"
-          >
-            ${renderMonitorIcon()}
-          </button>
           <button
             class="settings-toggle__button ${state.theme === "light" ? "active" : ""}"
             @click=${applyTheme("light")}

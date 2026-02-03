@@ -692,8 +692,6 @@ export function renderChat(props: ChatProps) {
           </div>
         </div>
 
-        ${renderQuickActions(props)}
-
         ${props.showModelSelector ? renderModelSelectorDropdown(props) : nothing}
       </div>
     </section>

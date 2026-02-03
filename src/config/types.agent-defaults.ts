@@ -132,6 +132,8 @@ export type AgentDefaultsConfig = {
   compaction?: AgentCompactionConfig;
   /** Vector memory search configuration (per-agent overrides supported). */
   memorySearch?: MemorySearchConfig;
+  /** Context Intelligence Engine for optimizing token usage. */
+  contextIntelligence?: ContextIntelligenceConfig;
   /** Default thinking level when no /think directive is present. */
   thinkingDefault?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
   /** Default verbose level when no /verbose directive is present. */
@@ -259,4 +261,58 @@ export type AgentCompactionMemoryFlushConfig = {
   prompt?: string;
   /** System prompt appended for the memory flush turn. */
   systemPrompt?: string;
+};
+
+// Context Intelligence Engine types
+export type ContextIntelligenceCompressionConfig = {
+  /** Enable smart compression (default: true). */
+  enabled?: boolean;
+  /** Target compression ratio (0.3 = keep 30%, default: 0.5). */
+  targetRatio?: number;
+  /** Number of recent messages to preserve without compression (default: 5). */
+  preserveRecent?: number;
+  /** Importance threshold to preserve messages (0-1, default: 0.8). */
+  preserveImportance?: number;
+  /** Enable LLM-based summarization (default: true). */
+  enableSummarization?: boolean;
+  /** Enable semantic compression for structured data (default: true). */
+  enableSemantic?: boolean;
+};
+
+export type ContextIntelligenceProgressiveConfig = {
+  /** Enable progressive compression (default: true). */
+  enabled?: boolean;
+  /** Compression thresholds by age. */
+  thresholds?: Array<{
+    /** Age in minutes. */
+    minutes: number;
+    /** Compression level (0-4, higher = more compression). */
+    level: number;
+  }>;
+};
+
+export type ContextIntelligenceCachingConfig = {
+  /** Enable prompt caching optimization (default: true). */
+  enabled?: boolean;
+  /** Cache warmup interval in minutes (default: 55, just under 1h TTL). */
+  warmupInterval?: number;
+  /** Enable fingerprint-based cache keys (default: true). */
+  enableFingerprinting?: boolean;
+};
+
+export type ContextIntelligenceConfig = {
+  /** Enable Context Intelligence Engine (default: true). */
+  enabled?: boolean;
+  /** Maximum context tokens (hard limit from model). */
+  maxContextTokens?: number;
+  /** Target context tokens (with headroom, default: 75% of max). */
+  targetContextTokens?: number;
+  /** Reserve tokens for response (default: 10000). */
+  reserveTokens?: number;
+  /** Compression settings. */
+  compression?: ContextIntelligenceCompressionConfig;
+  /** Progressive compression settings. */
+  progressive?: ContextIntelligenceProgressiveConfig;
+  /** Caching optimization settings. */
+  caching?: ContextIntelligenceCachingConfig;
 };

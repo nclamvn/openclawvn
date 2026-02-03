@@ -45,10 +45,12 @@
   overflow-y: auto;
   overflow-x: hidden;
   padding: 4px 4px;
-  margin: 0 -4px;
+  margin: 0 auto; /* Center horizontally */
   min-height: 0; /* Allow shrinking for flex scroll behavior */
   border-radius: 12px;
   background: transparent;
+  width: 80%;
+  max-width: 80%;
 }
 
 /* Focus mode exit button */
@@ -101,9 +103,13 @@
   flex-direction: column;
   gap: 12px;
   margin-top: auto; /* Push to bottom of flex container */
+  margin-left: auto;
+  margin-right: auto;
   padding: 12px 4px 4px;
   background: linear-gradient(to bottom, transparent, var(--bg) 20%);
   z-index: 10;
+  width: 80%;
+  max-width: 80%;
 }
 
 /* Image attachments preview */

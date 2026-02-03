@@ -90,6 +90,7 @@ import { getGlobalHookRunner } from "../../../plugins/hook-runner-global.js";
 import { MAX_IMAGE_BYTES } from "../../../media/constants.js";
 import type { EmbeddedRunAttemptParams, EmbeddedRunAttemptResult } from "./types.js";
 import { detectAndLoadPromptImages } from "./images.js";
+import { applyContextIntelligence } from "./context-intelligence-adapter.js";
 
 export function injectHistoryImagesIntoMessages(
   messages: AgentMessage[],
@@ -544,9 +545,27 @@ export async function runEmbeddedAttempt(
           policy: transcriptPolicy,
         });
         cacheTrace?.recordStage("session:sanitized", { messages: prior });
+
+        // Apply Context Intelligence optimization if enabled
+        const contextIntelligenceConfig = params.config?.agents?.defaults?.contextIntelligence;
+        const contextOptResult = applyContextIntelligence(
+          prior,
+          appendPrompt, // Use the built system prompt for token estimation
+          contextIntelligenceConfig,
+          params.modelId,
+        );
+        const optimizedPrior = contextOptResult.messages;
+        if (contextOptResult.applied) {
+          log.debug(
+            `context-intelligence: optimized session context ` +
+              `${contextOptResult.originalTokens} -> ${contextOptResult.optimizedTokens} tokens ` +
+              `(${contextOptResult.savingsPercent.toFixed(1)}% saved)`,
+          );
+        }
+
         const validatedGemini = transcriptPolicy.validateGeminiTurns
-          ? validateGeminiTurns(prior)
-          : prior;
+          ? validateGeminiTurns(optimizedPrior)
+          : optimizedPrior;
         const validated = transcriptPolicy.validateAnthropicTurns
           ? validateAnthropicTurns(validatedGemini)
           : validatedGemini;

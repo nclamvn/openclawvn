@@ -4,6 +4,11 @@ import type { ExtensionContext } from "@mariozechner/pi-coding-agent";
 
 import type { EffectiveContextPruningSettings } from "./settings.js";
 import { makeToolPrunablePredicate } from "./tools.js";
+import {
+  createFingerprint,
+  findDuplicates,
+  fingerprintMessage,
+} from "../../../context-intelligence/index.js";
 
 const CHARS_PER_TOKEN_ESTIMATE = 4;
 // We currently skip pruning tool results that contain images. Still, we count them (approx.) so
@@ -153,6 +158,54 @@ function estimateMessageChars(message: AgentMessage): number {
 
 function estimateContextChars(messages: AgentMessage[]): number {
   return messages.reduce((sum, m) => sum + estimateMessageChars(m), 0);
+}
+
+/**
+ * Find duplicate tool results using fingerprinting.
+ * Returns a set of message indices that are duplicates (keeping the first occurrence).
+ */
+function findDuplicateToolResultIndices(messages: AgentMessage[]): Set<number> {
+  const duplicateIndices = new Set<number>();
+
+  // Fingerprint all tool result messages
+  const toolResultMessages: Array<{ index: number; content: string }> = [];
+  for (let i = 0; i < messages.length; i++) {
+    const msg = messages[i];
+    if (msg?.role === "toolResult") {
+      const content = msg.content
+        .filter((c): c is TextContent => c.type === "text")
+        .map((c) => c.text)
+        .join("\n");
+      if (content.length > 0) {
+        toolResultMessages.push({ index: i, content });
+      }
+    }
+  }
+
+  // Convert to fingerprintable format and find duplicates
+  const fingerprintedMessages = toolResultMessages.map((m, idx) =>
+    fingerprintMessage({
+      id: `tool-${idx}`,
+      role: "tool",
+      content: m.content,
+    }),
+  );
+
+  const duplicates = findDuplicates(fingerprintedMessages);
+
+  // For each set of duplicates, mark all except the first (most recent) for pruning
+  for (const [, msgs] of duplicates) {
+    // Keep the last occurrence (most recent), mark earlier ones for pruning
+    for (let i = 0; i < msgs.length - 1; i++) {
+      const fpId = msgs[i].id;
+      const idx = Number.parseInt(fpId.replace("tool-", ""), 10);
+      if (!Number.isNaN(idx) && idx < toolResultMessages.length) {
+        duplicateIndices.add(toolResultMessages[idx].index);
+      }
+    }
+  }
+
+  return duplicateIndices;
 }
 
 function findAssistantCutoffIndex(
@@ -320,7 +373,19 @@ export function pruneContextMessages(params: {
     return outputAfterSoftTrim;
   }
 
-  for (const i of prunableToolIndexes) {
+  // Use Context Intelligence to find duplicate tool results - prioritize these for hard clearing
+  const duplicateIndices = findDuplicateToolResultIndices(outputAfterSoftTrim);
+
+  // Sort prunable indexes: duplicates first (by index), then non-duplicates (by index)
+  const sortedPrunableIndexes = [...prunableToolIndexes].sort((a, b) => {
+    const aIsDup = duplicateIndices.has(a);
+    const bIsDup = duplicateIndices.has(b);
+    if (aIsDup && !bIsDup) return -1; // a comes first
+    if (!aIsDup && bIsDup) return 1; // b comes first
+    return a - b; // same category, sort by index (older first)
+  });
+
+  for (const i of sortedPrunableIndexes) {
     if (ratio < settings.hardClearRatio) {
       break;
     }
@@ -330,9 +395,13 @@ export function pruneContextMessages(params: {
     }
 
     const beforeChars = estimateMessageChars(msg);
+    const isDuplicate = duplicateIndices.has(i);
+    const placeholder = isDuplicate
+      ? "[Duplicate tool result cleared]"
+      : settings.hardClear.placeholder;
     const cleared: ToolResultMessage = {
       ...msg,
-      content: [asText(settings.hardClear.placeholder)],
+      content: [asText(placeholder)],
     };
     if (!next) {
       next = messages.slice();

@@ -120,13 +120,13 @@ function setZaloUpdateMode(
 async function noteZaloTokenHelp(prompter: WizardPrompter): Promise<void> {
   await prompter.note(
     [
-      "1) Open Zalo Bot Platform: https://bot.zaloplatforms.com",
-      "2) Create a bot and get the token",
-      "3) Token looks like 12345689:abc-xyz",
-      "Tip: you can also set ZALO_BOT_TOKEN in your env.",
-      "Docs: https://docs.openclaw.ai/channels/zalo",
+      "1) Mở Zalo Bot Platform: https://bot.zaloplatforms.com",
+      "2) Tạo bot mới và lấy token",
+      "3) Token có dạng: 12345689:abc-xyz",
+      "Mẹo: bạn cũng có thể đặt ZALO_BOT_TOKEN trong biến môi trường.",
+      "Tài liệu: https://docs.openclaw.ai/channels/zalo",
     ].join("\n"),
-    "Zalo bot token",
+    "Token Zalo Bot",
   );
 }
 
@@ -139,13 +139,13 @@ async function promptZaloAllowFrom(params: {
   const resolved = resolveZaloAccount({ cfg, accountId });
   const existingAllowFrom = resolved.config.allowFrom ?? [];
   const entry = await prompter.text({
-    message: "Zalo allowFrom (user id)",
+    message: "Zalo allowFrom (ID người dùng)",
     placeholder: "123456789",
     initialValue: existingAllowFrom[0] ? String(existingAllowFrom[0]) : undefined,
     validate: (value) => {
       const raw = String(value ?? "").trim();
-      if (!raw) return "Required";
-      if (!/^\d+$/.test(raw)) return "Use a numeric Zalo user id";
+      if (!raw) return "Bắt buộc";
+      if (!/^\d+$/.test(raw)) return "Sử dụng ID số của người dùng Zalo";
       return undefined;
     },
   });
@@ -222,8 +222,8 @@ export const zaloOnboardingAdapter: ChannelOnboardingAdapter = {
     return {
       channel,
       configured,
-      statusLines: [`Zalo: ${configured ? "configured" : "needs token"}`],
-      selectionHint: configured ? "recommended · configured" : "recommended · newcomer-friendly",
+      statusLines: [`Zalo: ${configured ? "đã cấu hình" : "cần token"}`],
+      selectionHint: configured ? "khuyến nghị · đã cấu hình" : "khuyến nghị · thân thiện người mới",
       quickstartScore: configured ? 1 : 10,
     };
   },

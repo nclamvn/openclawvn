@@ -70,6 +70,7 @@ import type { EmbeddedPiCompactResult } from "./types.js";
 import { formatUserTime, resolveUserTimeFormat, resolveUserTimezone } from "../date-time.js";
 import { describeUnknownError, mapThinkingLevel, resolveExecToolDefaults } from "./utils.js";
 import { buildTtsSystemPromptHint } from "../../tts/tts.js";
+import { applyContextIntelligence } from "./run/context-intelligence-adapter.js";
 
 export type CompactEmbeddedPiSessionParams = {
   sessionId: string;
@@ -421,9 +422,27 @@ export async function compactEmbeddedPiSessionDirect(
           sessionId: params.sessionId,
           policy: transcriptPolicy,
         });
+
+        // Apply Context Intelligence optimization before compaction
+        const contextIntelligenceConfig = params.config?.agents?.defaults?.contextIntelligence;
+        const contextOptResult = applyContextIntelligence(
+          prior,
+          appendPrompt,
+          contextIntelligenceConfig,
+          modelId,
+        );
+        const optimizedPrior = contextOptResult.messages;
+        if (contextOptResult.applied) {
+          log.debug(
+            `context-intelligence (compact): optimized context ` +
+              `${contextOptResult.originalTokens} -> ${contextOptResult.optimizedTokens} tokens ` +
+              `(${contextOptResult.savingsPercent.toFixed(1)}% saved)`,
+          );
+        }
+
         const validatedGemini = transcriptPolicy.validateGeminiTurns
-          ? validateGeminiTurns(prior)
-          : prior;
+          ? validateGeminiTurns(optimizedPrior)
+          : optimizedPrior;
         const validated = transcriptPolicy.validateAnthropicTurns
           ? validateAnthropicTurns(validatedGemini)
           : validatedGemini;
