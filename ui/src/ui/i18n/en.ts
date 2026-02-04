@@ -16,13 +16,19 @@ export const en = {
     config: "Config",
     debug: "Debug",
     logs: "Logs",
-    docs: "Docs",
+    // Update
+    update: "UPDATE",
+    checkUpdate: "Check for updates",
+    newVersion: "New version",
+    currentVersion: "Current version",
+    latestVersion: "Latest version",
+    upToDate: "Up to date",
+    updateAvailable: "Update available",
 
     // Groups
     control: "CONTROL",
     agent: "AGENT",
     settings: "SETTINGS",
-    resources: "RESOURCES",
 
     // Subtitles
     subtitles: {
@@ -121,7 +127,7 @@ export const en = {
   sidebar: {
     expand: "Expand sidebar",
     collapse: "Collapse sidebar",
-    docs: "Documentation (new tab)",
+    checkUpdate: "Check for updates on GitHub",
   },
 
   // ============================================

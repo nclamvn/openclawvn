@@ -17,13 +17,19 @@ export const vi = {
     config: "Cấu hình",
     debug: "Gỡ lỗi",
     logs: "Nhật ký",
-    docs: "Tài liệu",
+    // Update
+    update: "CẬP NHẬT",
+    checkUpdate: "Kiểm tra cập nhật",
+    newVersion: "Phiên bản mới",
+    currentVersion: "Phiên bản hiện tại",
+    latestVersion: "Phiên bản mới nhất",
+    upToDate: "Đã cập nhật mới nhất",
+    updateAvailable: "Có bản cập nhật mới",
 
     // Groups
     control: "ĐIỀU KHIỂN",
     agent: "TÁC TỬ",
     settings: "CÀI ĐẶT",
-    resources: "TÀI NGUYÊN",
 
     // Subtitles
     subtitles: {
@@ -122,7 +128,7 @@ export const vi = {
   sidebar: {
     expand: "Mở rộng thanh bên",
     collapse: "Thu gọn thanh bên",
-    docs: "Tài liệu (mở tab mới)",
+    checkUpdate: "Kiểm tra cập nhật trên GitHub",
   },
 
   // ============================================

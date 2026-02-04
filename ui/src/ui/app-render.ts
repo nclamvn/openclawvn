@@ -183,20 +183,20 @@ export function renderApp(state: AppViewState) {
             </div>
           `;
         })}
-        <div class="nav-group nav-group--links">
+        <div class="nav-group nav-group--update">
           <div class="nav-label nav-label--static">
-            <span class="nav-label__text">${t().nav.resources}</span>
+            <span class="nav-label__text">${t().nav.update}</span>
           </div>
           <div class="nav-group__items">
             <a
-              class="nav-item nav-item--external"
-              href="https://docs.openclaw.ai"
+              class="nav-item nav-item--update"
+              href="https://github.com/nclamvn/openclawvn/releases"
               target="_blank"
               rel="noreferrer"
-              title=${t().sidebar.docs}
+              title=${t().sidebar.checkUpdate}
             >
-              <span class="nav-item__icon" aria-hidden="true">${icons.book}</span>
-              <span class="nav-item__text">${t().nav.docs}</span>
+              <span class="nav-item__icon" aria-hidden="true">${icons.download}</span>
+              <span class="nav-item__text">${t().nav.checkUpdate}</span>
             </a>
           </div>
         </div>
