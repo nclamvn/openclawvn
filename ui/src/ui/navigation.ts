@@ -2,15 +2,15 @@ import type { IconName } from "./icons.js";
 import { t } from "./i18n";
 
 // Tab groups with translation keys
+// Simplified navigation - removed: instances, cron, skills, nodes, debug, logs
 export const TAB_GROUPS = [
   { label: "chat", labelKey: "chat", tabs: ["chat"] },
   {
     label: "control",
     labelKey: "control",
-    tabs: ["overview", "channels", "instances", "sessions", "cron"],
+    tabs: ["overview", "channels", "sessions"],
   },
-  { label: "agent", labelKey: "agent", tabs: ["skills", "nodes"] },
-  { label: "settings", labelKey: "settings", tabs: ["config", "debug", "logs"] },
+  { label: "settings", labelKey: "settings", tabs: ["config"] },
 ] as const;
 
 export function getTabGroupLabel(group: (typeof TAB_GROUPS)[number]): string {
@@ -29,7 +29,9 @@ export function getTabGroupLabel(group: (typeof TAB_GROUPS)[number]): string {
   }
 }
 
+// All tabs (including hidden ones for internal routing)
 export type Tab =
+  | "chat"
   | "overview"
   | "channels"
   | "instances"
@@ -37,12 +39,12 @@ export type Tab =
   | "cron"
   | "skills"
   | "nodes"
-  | "chat"
   | "config"
   | "debug"
   | "logs";
 
 const TAB_PATHS: Record<Tab, string> = {
+  chat: "/chat",
   overview: "/overview",
   channels: "/channels",
   instances: "/instances",
@@ -50,7 +52,6 @@ const TAB_PATHS: Record<Tab, string> = {
   cron: "/cron",
   skills: "/skills",
   nodes: "/nodes",
-  chat: "/chat",
   config: "/config",
   debug: "/debug",
   logs: "/logs",
@@ -149,6 +150,8 @@ export function iconForTab(tab: Tab): IconName {
 export function titleForTab(tab: Tab) {
   const translations = t();
   switch (tab) {
+    case "chat":
+      return translations.nav.chat;
     case "overview":
       return translations.nav.overview;
     case "channels":
@@ -163,8 +166,6 @@ export function titleForTab(tab: Tab) {
       return translations.nav.skills;
     case "nodes":
       return translations.nav.nodes;
-    case "chat":
-      return translations.nav.chat;
     case "config":
       return translations.nav.config;
     case "debug":
@@ -179,6 +180,8 @@ export function titleForTab(tab: Tab) {
 export function subtitleForTab(tab: Tab) {
   const subtitles = t().nav.subtitles;
   switch (tab) {
+    case "chat":
+      return subtitles.chat;
     case "overview":
       return subtitles.overview;
     case "channels":
@@ -193,8 +196,6 @@ export function subtitleForTab(tab: Tab) {
       return subtitles.skills;
     case "nodes":
       return subtitles.nodes;
-    case "chat":
-      return subtitles.chat;
     case "config":
       return subtitles.config;
     case "debug":
