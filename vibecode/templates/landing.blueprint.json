@@ -1,0 +1,180 @@
+{
+  "$schema": "../schemas/blueprint.schema.json",
+  "project": {
+    "name": "Landing Page Template",
+    "type": "landing",
+    "description": "High-converting landing page with hero, features, testimonials, and CTA",
+    "language": "vi"
+  },
+  "design": {
+    "theme": "dark",
+    "colors": {
+      "primary": "#3B82F6",
+      "secondary": "#8B5CF6",
+      "accent": "#10B981",
+      "background": "#000000",
+      "text": "#FFFFFF"
+    },
+    "typography": {
+      "headingFont": "Inter",
+      "bodyFont": "Inter"
+    },
+    "style": "minimal"
+  },
+  "structure": {
+    "pages": [
+      {
+        "path": "/",
+        "name": "Home",
+        "sections": ["Header", "Hero", "Features", "Testimonials", "CTA", "Footer"]
+      }
+    ],
+    "components": [
+      {
+        "name": "Header",
+        "description": "Fixed navigation with logo and menu",
+        "props": ["logo", "navItems", "ctaButton"]
+      },
+      {
+        "name": "Hero",
+        "description": "Full-screen hero with headline, subheadline, and CTA",
+        "props": ["title", "subtitle", "ctaText", "ctaLink", "backgroundImage"]
+      },
+      {
+        "name": "Features",
+        "description": "Grid of feature cards with icons",
+        "props": ["title", "features"]
+      },
+      {
+        "name": "Testimonials",
+        "description": "Customer testimonials carousel or grid",
+        "props": ["title", "testimonials"]
+      },
+      {
+        "name": "CTA",
+        "description": "Call-to-action section",
+        "props": ["title", "subtitle", "buttonText", "buttonLink"]
+      },
+      {
+        "name": "Footer",
+        "description": "Footer with links and copyright",
+        "props": ["links", "copyright"]
+      }
+    ]
+  },
+  "assets": {
+    "images": [
+      {
+        "id": "hero-bg",
+        "description": "Abstract gradient or tech background",
+        "url": "https://images.unsplash.com/photo-1557683316-973673baf926?w=1920&q=80",
+        "fallback": "https://picsum.photos/1920/1080",
+        "verified": true
+      },
+      {
+        "id": "feature-1",
+        "description": "Feature illustration 1",
+        "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=600&q=80",
+        "fallback": "https://picsum.photos/600/400?random=1",
+        "verified": true
+      },
+      {
+        "id": "feature-2",
+        "description": "Feature illustration 2",
+        "url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=600&q=80",
+        "fallback": "https://picsum.photos/600/400?random=2",
+        "verified": true
+      },
+      {
+        "id": "feature-3",
+        "description": "Feature illustration 3",
+        "url": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=600&q=80",
+        "fallback": "https://picsum.photos/600/400?random=3",
+        "verified": true
+      }
+    ],
+    "icons": "lucide-react"
+  },
+  "content": {
+    "hero": {
+      "headline": "[Giá trị chính của sản phẩm]",
+      "subheadline": "[Mô tả ngắn gọn lợi ích cho khách hàng]",
+      "cta": "Bắt đầu ngay"
+    },
+    "features": {
+      "title": "Tính năng nổi bật",
+      "items": [
+        {
+          "title": "[Tính năng 1]",
+          "description": "[Mô tả lợi ích]",
+          "icon": "Zap"
+        },
+        {
+          "title": "[Tính năng 2]",
+          "description": "[Mô tả lợi ích]",
+          "icon": "Shield"
+        },
+        {
+          "title": "[Tính năng 3]",
+          "description": "[Mô tả lợi ích]",
+          "icon": "Sparkles"
+        }
+      ]
+    },
+    "cta": {
+      "title": "Sẵn sàng bắt đầu?",
+      "subtitle": "Tham gia cùng hàng ngàn khách hàng hài lòng",
+      "button": "Đăng ký miễn phí"
+    }
+  },
+  "tech": {
+    "framework": "Next.js 14",
+    "styling": "Tailwind CSS",
+    "animation": "Framer Motion",
+    "dependencies": ["framer-motion", "lucide-react"]
+  },
+  "files": [
+    {
+      "path": "src/app/page.tsx",
+      "purpose": "Main landing page"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "purpose": "Navigation header"
+    },
+    {
+      "path": "src/components/Hero.tsx",
+      "purpose": "Hero section"
+    },
+    {
+      "path": "src/components/Features.tsx",
+      "purpose": "Features grid"
+    },
+    {
+      "path": "src/components/Testimonials.tsx",
+      "purpose": "Testimonials section"
+    },
+    {
+      "path": "src/components/CTA.tsx",
+      "purpose": "Call-to-action section"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "purpose": "Footer"
+    },
+    {
+      "path": "src/lib/content.ts",
+      "purpose": "Content/translations"
+    }
+  ],
+  "verification": {
+    "checklist": [
+      "Dev server starts without errors",
+      "All images load correctly",
+      "No TypeScript errors",
+      "Responsive on mobile/tablet/desktop",
+      "All links work",
+      "Animations smooth"
+    ]
+  }
+}

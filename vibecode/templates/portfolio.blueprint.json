@@ -1,0 +1,190 @@
+{
+  "$schema": "../schemas/blueprint.schema.json",
+  "project": {
+    "name": "Portfolio Template",
+    "type": "portfolio",
+    "description": "Personal portfolio showcasing projects and skills",
+    "language": "vi"
+  },
+  "design": {
+    "theme": "dark",
+    "colors": {
+      "primary": "#F59E0B",
+      "secondary": "#8B5CF6",
+      "accent": "#10B981",
+      "background": "#0F172A",
+      "text": "#F8FAFC"
+    },
+    "typography": {
+      "headingFont": "Space Grotesk",
+      "bodyFont": "Inter"
+    },
+    "style": "editorial"
+  },
+  "structure": {
+    "pages": [
+      {
+        "path": "/",
+        "name": "Home",
+        "sections": ["Header", "Hero", "About", "Projects", "Skills", "Contact", "Footer"]
+      }
+    ],
+    "components": [
+      {
+        "name": "Header",
+        "description": "Minimal navigation",
+        "props": ["name", "navItems"]
+      },
+      {
+        "name": "Hero",
+        "description": "Introduction with name and title",
+        "props": ["greeting", "name", "title", "description", "avatar"]
+      },
+      {
+        "name": "About",
+        "description": "About me section",
+        "props": ["title", "bio", "image"]
+      },
+      {
+        "name": "Projects",
+        "description": "Project showcase grid",
+        "props": ["title", "projects"]
+      },
+      {
+        "name": "Skills",
+        "description": "Skills/tech stack",
+        "props": ["title", "skills"]
+      },
+      {
+        "name": "Contact",
+        "description": "Contact form or links",
+        "props": ["title", "email", "socials"]
+      }
+    ]
+  },
+  "assets": {
+    "images": [
+      {
+        "id": "avatar",
+        "description": "Profile photo",
+        "url": "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=400&q=80",
+        "fallback": "https://picsum.photos/400/400",
+        "verified": true
+      },
+      {
+        "id": "project-1",
+        "description": "Project 1 thumbnail",
+        "url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+        "fallback": "https://picsum.photos/800/600?random=1",
+        "verified": true
+      },
+      {
+        "id": "project-2",
+        "description": "Project 2 thumbnail",
+        "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=800&q=80",
+        "fallback": "https://picsum.photos/800/600?random=2",
+        "verified": true
+      },
+      {
+        "id": "project-3",
+        "description": "Project 3 thumbnail",
+        "url": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80",
+        "fallback": "https://picsum.photos/800/600?random=3",
+        "verified": true
+      }
+    ],
+    "icons": "lucide-react"
+  },
+  "content": {
+    "hero": {
+      "greeting": "Xin chào, tôi là",
+      "name": "[Tên của bạn]",
+      "title": "[Chức danh - VD: Full-stack Developer]",
+      "description": "[Mô tả ngắn về bản thân và expertise]"
+    },
+    "about": {
+      "title": "Về tôi",
+      "bio": "[Giới thiệu chi tiết hơn về background, passion, và goals]"
+    },
+    "projects": {
+      "title": "Dự án nổi bật",
+      "items": [
+        {
+          "title": "[Tên dự án 1]",
+          "description": "[Mô tả ngắn]",
+          "tech": ["React", "Node.js", "MongoDB"],
+          "link": "#",
+          "github": "#"
+        }
+      ]
+    },
+    "skills": {
+      "title": "Kỹ năng",
+      "categories": [
+        {
+          "name": "Frontend",
+          "items": ["React", "Next.js", "TypeScript", "Tailwind"]
+        },
+        {
+          "name": "Backend",
+          "items": ["Node.js", "Python", "PostgreSQL"]
+        }
+      ]
+    },
+    "contact": {
+      "title": "Liên hệ",
+      "email": "your@email.com",
+      "socials": {
+        "github": "#",
+        "linkedin": "#",
+        "twitter": "#"
+      }
+    }
+  },
+  "tech": {
+    "framework": "Next.js 14",
+    "styling": "Tailwind CSS",
+    "animation": "Framer Motion",
+    "dependencies": ["framer-motion", "lucide-react"]
+  },
+  "files": [
+    {
+      "path": "src/app/page.tsx",
+      "purpose": "Main portfolio page"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "purpose": "Navigation"
+    },
+    {
+      "path": "src/components/Hero.tsx",
+      "purpose": "Hero/intro section"
+    },
+    {
+      "path": "src/components/Projects.tsx",
+      "purpose": "Project showcase"
+    },
+    {
+      "path": "src/components/Skills.tsx",
+      "purpose": "Skills section"
+    },
+    {
+      "path": "src/components/Contact.tsx",
+      "purpose": "Contact section"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "purpose": "Footer"
+    }
+  ],
+  "verification": {
+    "checklist": [
+      "Dev server starts without errors",
+      "All images load correctly",
+      "No TypeScript errors",
+      "Responsive on mobile/tablet/desktop",
+      "All external links open in new tab",
+      "Contact form/links work"
+    ]
+  }
+}

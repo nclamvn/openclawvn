@@ -1,51 +1,133 @@
-# Vibecode Integration for OpenClaw Vietnam
+# Vibecode Methodology
 
-Tích hợp methodology từ Vibecode Kit v4.0 để build ứng dụng lớn.
+> **"Đơn giản ở HÌNH THỨC, sâu sắc ở BẢN CHẤT"**
 
-## Workflow
+Vibecode là architectural pattern khai thác sự khác biệt system prompt giữa Claude Chat và Claude Code để tạo ra sản phẩm chất lượng cao.
 
+## Quick Start
+
+### 1. Architect Phase (Claude Chat)
+
+Mở https://claude.ai/chat và paste nội dung từ:
 ```
-VISION → CONTEXT → BLUEPRINT → BUILD → REFINE
-  AI      Human      Both       AI      Both
-```
-
-## Cách sử dụng
-
-### Qua Chat (Zalo/Web)
-```
-/build landing    → Tạo landing page
-/build saas       → Tạo SaaS application
-/build dashboard  → Tạo dashboard/admin
-/build blog       → Tạo blog/docs
-/build portfolio  → Tạo portfolio
+vibecode/prompts/architect-chat.md
 ```
 
-### Qua CLI
+### 2. Verify Blueprint
+
 ```bash
-openclaw build --type landing --name "My Project"
+npx ts-node vibecode/tools/verify-blueprint.ts blueprint.json
 ```
+
+### 3. Builder Phase (Claude Code)
+
+```
+/build execute
+
+[PASTE BLUEPRINT JSON]
+```
+
+### 4. QA Check
+
+```bash
+npx ts-node vibecode/tools/qa-check.ts /path/to/project
+```
+
+---
 
 ## Cấu trúc thư mục
 
 ```
 vibecode/
-├── README.md           # File này
+├── README.md              # Tài liệu này
+├── METHODOLOGY.md         # Methodology chi tiết
+├── LESSONS-LEARNED.md     # Feedback loop documentation
 ├── prompts/
-│   ├── architect.md    # Prompt cho Kiến trúc sư (Vision + Blueprint)
-│   ├── builder.md      # Prompt cho Thợ xây (Code generation)
-│   └── refiner.md      # Prompt cho Refine phase
+│   └── architect-chat.md  # Prompt cho Claude Chat Architect
+├── schemas/
+│   └── blueprint.schema.json  # JSON Schema cho Blueprint
 ├── templates/
-│   ├── landing.md      # Template Landing Page
-│   ├── saas.md         # Template SaaS App
-│   ├── dashboard.md    # Template Dashboard
-│   ├── blog.md         # Template Blog/Docs
-│   └── portfolio.md    # Template Portfolio
-└── blueprints/         # Generated blueprints (gitignored)
+│   ├── landing.blueprint.json   # Template Landing Page
+│   ├── saas.blueprint.json      # Template SaaS
+│   └── portfolio.blueprint.json # Template Portfolio
+└── tools/
+    ├── verify-blueprint.ts  # Verify URLs trong Blueprint
+    ├── validate-blueprint.ts # Validate Blueprint schema
+    └── qa-check.ts          # Post-build QA automation
 ```
 
-## Nguyên tắc
+---
 
-1. **AI đề xuất trước** - Không chờ user mô tả chi tiết
-2. **Human cung cấp context** - Business goals, audience, constraints
-3. **Blueprint là khế ước** - Sau khi approve, không thay đổi kiến trúc
-4. **Context Intelligence** - Giữ context xuyên suốt project
+## Workflow
+
+```
+┌─────────────────┐         ┌─────────────────┐
+│  Claude Chat    │         │  Claude Code    │
+│  (Architect)    │         │  (Builder)      │
+├─────────────────┤         ├─────────────────┤
+│ • Think deep    │ ──────▶ │ • Execute fast  │
+│ • Verify URLs   │Blueprint│ • Follow spec   │
+│ • Complete spec │         │ • No questions  │
+└─────────────────┘         └─────────────────┘
+        │                           │
+        ▼                           ▼
+┌─────────────────┐         ┌─────────────────┐
+│ verify-blueprint│         │    qa-check     │
+│ (Pre-handoff)   │         │ (Post-build)    │
+└─────────────────┘         └─────────────────┘
+```
+
+---
+
+## Tools
+
+### verify-blueprint.ts
+
+Kiểm tra tất cả URLs trong Blueprint trước khi handoff cho Builder.
+
+```bash
+# From file
+npx ts-node vibecode/tools/verify-blueprint.ts blueprint.json
+
+# From stdin
+cat blueprint.json | npx ts-node vibecode/tools/verify-blueprint.ts
+```
+
+### validate-blueprint.ts
+
+Validate Blueprint theo JSON Schema.
+
+```bash
+npx ts-node vibecode/tools/validate-blueprint.ts blueprint.json
+```
+
+### qa-check.ts
+
+Automated post-build verification.
+
+```bash
+npx ts-node vibecode/tools/qa-check.ts /path/to/project
+```
+
+---
+
+## Templates
+
+| Template | Use Case |
+|----------|----------|
+| `landing.blueprint.json` | Marketing landing pages |
+| `saas.blueprint.json` | SaaS marketing sites |
+| `portfolio.blueprint.json` | Personal portfolios |
+
+---
+
+## Định nghĩa DONE
+
+```
+DONE =
+  ✅ Tasks completed (Điều kiện CẦN)
+  + ✅ Dev server runs (Điều kiện ĐỦ)
+  + ✅ All assets load (Điều kiện ĐỦ)
+  + ✅ No TypeScript errors (Điều kiện ĐỦ)
+  + ✅ qa-check passes (Điều kiện ĐỦ)
+```

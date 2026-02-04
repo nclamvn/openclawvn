@@ -1,0 +1,173 @@
+{
+  "$schema": "../schemas/blueprint.schema.json",
+  "project": {
+    "name": "SaaS Application Template",
+    "type": "saas",
+    "description": "SaaS marketing site with pricing, features, and signup",
+    "language": "vi"
+  },
+  "design": {
+    "theme": "light",
+    "colors": {
+      "primary": "#6366F1",
+      "secondary": "#EC4899",
+      "accent": "#14B8A6",
+      "background": "#FFFFFF",
+      "text": "#1F2937"
+    },
+    "typography": {
+      "headingFont": "Inter",
+      "bodyFont": "Inter"
+    },
+    "style": "corporate"
+  },
+  "structure": {
+    "pages": [
+      {
+        "path": "/",
+        "name": "Home",
+        "sections": ["Header", "Hero", "LogoCloud", "Features", "HowItWorks", "Pricing", "FAQ", "CTA", "Footer"]
+      },
+      {
+        "path": "/pricing",
+        "name": "Pricing",
+        "sections": ["Header", "PricingHero", "PricingTable", "FAQ", "Footer"]
+      }
+    ],
+    "components": [
+      {
+        "name": "Header",
+        "description": "Navigation with logo, menu, and auth buttons",
+        "props": ["logo", "navItems", "loginButton", "signupButton"]
+      },
+      {
+        "name": "Hero",
+        "description": "Hero with product screenshot/video",
+        "props": ["title", "subtitle", "ctaText", "productImage"]
+      },
+      {
+        "name": "LogoCloud",
+        "description": "Trusted by logos",
+        "props": ["title", "logos"]
+      },
+      {
+        "name": "Features",
+        "description": "Feature showcase with screenshots",
+        "props": ["features"]
+      },
+      {
+        "name": "Pricing",
+        "description": "Pricing cards",
+        "props": ["plans"]
+      },
+      {
+        "name": "FAQ",
+        "description": "Frequently asked questions accordion",
+        "props": ["questions"]
+      }
+    ]
+  },
+  "assets": {
+    "images": [
+      {
+        "id": "product-screenshot",
+        "description": "Product dashboard screenshot",
+        "url": "https://images.unsplash.com/photo-1551288049-bebda4e38f71?w=1200&q=80",
+        "fallback": "https://picsum.photos/1200/800",
+        "verified": true
+      },
+      {
+        "id": "feature-1",
+        "description": "Feature screenshot 1",
+        "url": "https://images.unsplash.com/photo-1460925895917-afdab827c52f?w=800&q=80",
+        "fallback": "https://picsum.photos/800/600?random=1",
+        "verified": true
+      },
+      {
+        "id": "feature-2",
+        "description": "Feature screenshot 2",
+        "url": "https://images.unsplash.com/photo-1551434678-e076c223a692?w=800&q=80",
+        "fallback": "https://picsum.photos/800/600?random=2",
+        "verified": true
+      }
+    ],
+    "icons": "lucide-react"
+  },
+  "content": {
+    "hero": {
+      "headline": "[Tên sản phẩm] - [Lợi ích chính]",
+      "subheadline": "[Giải quyết vấn đề gì cho ai]",
+      "cta": "Dùng thử miễn phí"
+    },
+    "pricing": {
+      "title": "Bảng giá đơn giản, minh bạch",
+      "plans": [
+        {
+          "name": "Starter",
+          "price": "Miễn phí",
+          "features": ["Feature 1", "Feature 2", "Feature 3"],
+          "cta": "Bắt đầu"
+        },
+        {
+          "name": "Pro",
+          "price": "299.000₫/tháng",
+          "features": ["Tất cả Starter", "Feature 4", "Feature 5"],
+          "cta": "Nâng cấp",
+          "highlighted": true
+        },
+        {
+          "name": "Enterprise",
+          "price": "Liên hệ",
+          "features": ["Tất cả Pro", "Feature 6", "Hỗ trợ 24/7"],
+          "cta": "Liên hệ"
+        }
+      ]
+    }
+  },
+  "tech": {
+    "framework": "Next.js 14",
+    "styling": "Tailwind CSS",
+    "animation": "Framer Motion",
+    "dependencies": ["framer-motion", "lucide-react", "@headlessui/react"]
+  },
+  "files": [
+    {
+      "path": "src/app/page.tsx",
+      "purpose": "Main landing page"
+    },
+    {
+      "path": "src/app/pricing/page.tsx",
+      "purpose": "Pricing page"
+    },
+    {
+      "path": "src/components/Header.tsx",
+      "purpose": "Navigation"
+    },
+    {
+      "path": "src/components/Hero.tsx",
+      "purpose": "Hero section"
+    },
+    {
+      "path": "src/components/Pricing.tsx",
+      "purpose": "Pricing cards"
+    },
+    {
+      "path": "src/components/FAQ.tsx",
+      "purpose": "FAQ accordion"
+    },
+    {
+      "path": "src/components/Footer.tsx",
+      "purpose": "Footer"
+    }
+  ],
+  "verification": {
+    "checklist": [
+      "Dev server starts without errors",
+      "All images load correctly",
+      "No TypeScript errors",
+      "Responsive on mobile/tablet/desktop",
+      "Pricing toggle works (if monthly/yearly)",
+      "FAQ accordion works"
+    ]
+  }
+}
