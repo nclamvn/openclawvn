@@ -128,7 +128,7 @@ export const vi = {
   sidebar: {
     expand: "Mở rộng thanh bên",
     collapse: "Thu gọn thanh bên",
-    checkUpdate: "Kiểm tra cập nhật trên GitHub",
+    checkUpdate: "Kiểm tra cập nhật từ OpenClaw gốc",
   },
 
   // ============================================

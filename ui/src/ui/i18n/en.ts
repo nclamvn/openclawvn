@@ -127,7 +127,7 @@ export const en = {
   sidebar: {
     expand: "Expand sidebar",
     collapse: "Collapse sidebar",
-    checkUpdate: "Check for updates on GitHub",
+    checkUpdate: "Check updates from upstream OpenClaw",
   },
 
   // ============================================

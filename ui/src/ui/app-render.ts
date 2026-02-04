@@ -190,7 +190,7 @@ export function renderApp(state: AppViewState) {
           <div class="nav-group__items">
             <a
               class="nav-item nav-item--update"
-              href="https://github.com/nclamvn/openclawvn/releases"
+              href="https://github.com/openclaw/openclaw/releases"
               target="_blank"
               rel="noreferrer"
               title=${t().sidebar.checkUpdate}
