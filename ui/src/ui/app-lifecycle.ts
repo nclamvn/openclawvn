@@ -17,6 +17,7 @@ import {
   startDebugPolling,
   stopDebugPolling,
 } from "./app-polling";
+import { checkForUpdates } from "./app-update";
 
 type LifecycleHost = {
   basePath: string;
@@ -31,6 +32,10 @@ type LifecycleHost = {
   logsEntries: unknown[];
   popStateHandler: () => void;
   topbarObserver: ResizeObserver | null;
+  // Update check state
+  updateAvailable: boolean;
+  latestVersion: string | null;
+  currentVersion: string;
 };
 
 export function handleConnected(host: LifecycleHost) {
@@ -48,6 +53,12 @@ export function handleConnected(host: LifecycleHost) {
   if (host.tab === "debug") {
     startDebugPolling(host as unknown as Parameters<typeof startDebugPolling>[0]);
   }
+  // Check for updates from upstream
+  checkForUpdates().then((result) => {
+    host.updateAvailable = result.available;
+    host.latestVersion = result.latestVersion;
+    host.currentVersion = result.currentVersion;
+  });
 }
 
 export function handleFirstUpdated(host: LifecycleHost) {

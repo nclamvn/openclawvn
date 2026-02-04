@@ -31,6 +31,10 @@ export type AppViewState = {
   settings: UiSettings;
   password: string;
   tab: Tab;
+  // Update check state
+  updateAvailable: boolean;
+  latestVersion: string | null;
+  currentVersion: string;
   onboarding: boolean;
   basePath: string;
   connected: boolean;

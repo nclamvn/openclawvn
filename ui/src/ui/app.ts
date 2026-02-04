@@ -100,6 +100,10 @@ export class OpenClawApp extends LitElement {
   @state() tab: Tab = "chat";
   @state() onboarding = resolveOnboardingMode();
   @state() connected = false;
+  // Update check state
+  @state() updateAvailable = false;
+  @state() latestVersion: string | null = null;
+  @state() currentVersion = "2026.2.3";
   @state() theme: ThemeMode = this.settings.theme ?? "system";
   @state() themeResolved: ResolvedTheme = "dark";
   @state() hello: GatewayHelloOk | null = null;

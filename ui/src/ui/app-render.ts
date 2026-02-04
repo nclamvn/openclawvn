@@ -186,17 +186,21 @@ export function renderApp(state: AppViewState) {
         <div class="nav-group nav-group--update">
           <div class="nav-label nav-label--static">
             <span class="nav-label__text">${t().nav.update}</span>
+            ${state.updateAvailable ? html`<span class="update-dot"></span>` : nothing}
           </div>
           <div class="nav-group__items">
             <a
-              class="nav-item nav-item--update"
+              class="nav-item nav-item--update ${state.updateAvailable ? "has-update" : ""}"
               href="https://github.com/openclaw/openclaw/releases"
               target="_blank"
               rel="noreferrer"
-              title=${t().sidebar.checkUpdate}
+              title=${state.updateAvailable
+                ? `${t().nav.updateAvailable}: v${state.latestVersion}`
+                : t().sidebar.checkUpdate}
             >
               <span class="nav-item__icon" aria-hidden="true">${icons.download}</span>
               <span class="nav-item__text">${t().nav.checkUpdate}</span>
+              ${state.updateAvailable ? html`<span class="nav-item__dot"></span>` : nothing}
             </a>
           </div>
         </div>
