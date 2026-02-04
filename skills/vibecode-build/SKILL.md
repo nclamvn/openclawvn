@@ -1,6 +1,6 @@
 ---
 name: build
-description: "Build ứng dụng web với Vibecode methodology. Sử dụng /build [type] để tạo Landing Page, SaaS, Dashboard, Blog, hoặc Portfolio."
+description: "Build ứng dụng web với Vibecode methodology. Claude Code = Builder, Claude Chat = Architect."
 metadata:
   {
     "openclaw":
@@ -17,116 +17,141 @@ invocation:
 
 # Vibecode Build Skill
 
-Build ứng dụng web theo Vibecode methodology - quy trình 6 bước từ Vision đến Production.
+Build ứng dụng web với chất lượng cao theo Vibecode methodology.
 
-## Cách sử dụng
-
-```
-/build                    → Bắt đầu, AI sẽ hỏi bạn muốn làm gì
-/build landing            → Tạo Landing Page
-/build saas               → Tạo SaaS Application
-/build dashboard          → Tạo Dashboard/Admin Panel
-/build blog               → Tạo Blog/Documentation
-/build portfolio          → Tạo Portfolio
-```
-
-## Quy trình Vibecode
+## ⚠️ QUAN TRỌNG: Kiến trúc đúng
 
 ```
-VISION → CONTEXT → BLUEPRINT → BUILD → REFINE
-  AI      Human      Both       AI      Both
+Claude Chat (Architect) → Blueprint.json → Claude Code (Builder)
+      ↑                                          ↑
+  THINK mode                               EXECUTE mode
+  Semantic-rich                            Speed-optimized
 ```
 
-### Bước 1: VISION (AI đề xuất)
-Khi nhận yêu cầu, AI sẽ:
-1. Detect loại project
-2. Đề xuất layout, style, tech stack
-3. Hỏi context để customize
+**Tại sao không gộp?** System prompts khác biệt cơ bản:
+- Claude Chat: Tối ưu cho suy nghĩ sâu, chi tiết
+- Claude Code: Tối ưu cho thực thi nhanh, gọn
 
-### Bước 2: CONTEXT (Human cung cấp)
-Bạn cung cấp:
-- Sản phẩm/dịch vụ cụ thể
-- Khách hàng mục tiêu
-- Brand guidelines (nếu có)
-- Yêu cầu đặc biệt
+Gộp = Role-playing trên system prompt không phù hợp = Chất lượng thấp.
 
-### Bước 3: BLUEPRINT (Cùng đồng thuận)
-AI tạo Blueprint chi tiết:
-- Structure
-- Design System
-- File Structure
-- Deliverables
+---
 
-Reply "OK" để approve Blueprint.
+## Quy trình chuẩn
 
-### Bước 4: BUILD (AI code)
-AI tạo code theo Blueprint:
-- Setup project
-- Tạo components
-- Styling
-- Responsive
+### PHASE 1: ARCHITECT (Claude Chat)
 
-### Bước 5: REFINE (Cùng tinh chỉnh)
-Sau khi build xong:
-- Điều chỉnh text/copy
-- Thay đổi màu sắc nhỏ
-- Thêm/bớt nội dung
+**Mở https://claude.ai/chat và dùng prompt:**
 
-## Project Types
+```markdown
+# Vibecode Architect Mode
 
-### 🏠 Landing Page
-- Bán hàng, giới thiệu sản phẩm
-- Thu leads, marketing
-- Tech: Next.js + Tailwind + Framer Motion
+Bạn là KIẾN TRÚC SƯ. Tạo BLUEPRINT hoàn chỉnh cho Builder.
 
-### 💼 SaaS Application
-- Ứng dụng có đăng nhập
-- User management, features
-- Tech: Next.js + Tailwind + Supabase + NextAuth
+Quy tắc:
+1. THINK thoroughly - suy nghĩ kỹ
+2. ASK to clarify - hỏi khi chưa rõ
+3. VERIFY resources - test URLs trước khi đưa vào Blueprint
+4. OUTPUT JSON - Blueprint phải machine-readable
 
-### 📊 Dashboard
-- Admin panel, analytics
-- Data visualization
-- Tech: Next.js + Tailwind + Recharts + Shadcn
+---
 
-### 📝 Blog / Documentation
-- Blog, tài liệu hướng dẫn
-- Content-focused
-- Tech: Next.js + MDX + Tailwind
+Ý tưởng: [MÔ TẢ DỰ ÁN]
+```
 
-### 🎨 Portfolio
-- Showcase work, personal brand
-- Creative layouts
-- Tech: Next.js + Tailwind + Framer Motion
+**Architect sẽ tạo Blueprint.json với:**
+- Project info, design system
+- Verified image URLs (đã test)
+- File structure chi tiết
+- Dependencies
 
-## Nguyên tắc
+### PHASE 2: BUILDER (Claude Code)
 
-1. **AI đề xuất trước** - Không chờ user mô tả chi tiết
-2. **Human cung cấp context** - Business goals, audience, constraints
-3. **Blueprint là khế ước** - Sau khi approve, không thay đổi kiến trúc
-4. **Refine chỉ tinh chỉnh** - Thay đổi lớn = quay lại Vision
-
-## Ví dụ
+**Quay lại Claude Code với Blueprint:**
 
 ```
-User: /build landing
-AI: 🎯 PROJECT TYPE: Landing Page
+/build execute
 
-📐 LAYOUT ĐỀ XUẤT
-Hero → Social Proof → Features → How It Works → Testimonials → CTA → FAQ → Footer
+[PASTE BLUEPRINT.JSON]
+```
 
-🎨 STYLE
-Modern minimalist, conversion-focused
+**Hoặc:**
 
-💻 TECH STACK
-Next.js 14 + Tailwind + Framer Motion
+```
+Tôi có Blueprint từ Architect. Hãy build theo spec này:
 
-Để customize, tôi cần CONTEXT của bạn:
-1. Sản phẩm/dịch vụ cụ thể?
-2. Khách hàng mục tiêu?
-3. Đã có brand guidelines chưa?
+[PASTE BLUEPRINT.JSON]
 ```
 
 ---
 
-Bắt đầu với `/build` hoặc mô tả ý tưởng của bạn!
+## Nếu bạn KHÔNG có Blueprint
+
+Nếu muốn build nhanh mà không qua Architect (chấp nhận risk):
+
+```
+/build quick [type]
+```
+
+⚠️ **Cảnh báo:** Quick mode bỏ qua Architect phase, chất lượng có thể không đạt.
+
+---
+
+## Commands
+
+| Command | Mô tả |
+|---------|-------|
+| `/build` | Hướng dẫn quy trình đúng |
+| `/build execute` | Builder mode - cần Blueprint |
+| `/build quick [type]` | Quick mode - bỏ qua Architect (risky) |
+| `/build verify` | Verify project sau khi build |
+
+---
+
+## Project Types
+
+| Type | Mô tả |
+|------|-------|
+| `landing` | Landing Page - marketing, conversion |
+| `saas` | SaaS Application - auth, dashboard |
+| `dashboard` | Dashboard - analytics, admin |
+| `blog` | Blog/Docs - content, MDX |
+| `portfolio` | Portfolio - showcase, creative |
+
+---
+
+## Verification Checklist
+
+Trước khi "Done", PHẢI verify:
+
+```
+- [ ] Dev server starts without errors
+- [ ] All images load (check console)
+- [ ] No TypeScript errors
+- [ ] Responsive works
+- [ ] All links functional
+```
+
+**DONE = Tasks completed + Verification passed**
+
+---
+
+## Tại sao Vibecode hoạt động?
+
+```
+Multi-Agent Systems:
+Same model + Same prompt + Different roles = Role-playing = Fake specialization
+
+Vibecode:
+Different products + Different prompts = True specialization = Real quality
+```
+
+Claude Chat và Claude Code có SYSTEM PROMPTS khác biệt cơ bản.
+Vibecode khai thác sự khác biệt này thay vì chống lại nó.
+
+---
+
+## Quick Reference
+
+1. **Architect (Claude Chat):** https://claude.ai/chat
+2. **Builder (Claude Code):** `/build execute [blueprint]`
+3. **Verify:** `/build verify`
