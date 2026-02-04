@@ -64,6 +64,7 @@
   .brand {
     flex: 1;
     min-width: 0;
+    padding-left: 4px; /* Reduce padding on mobile */
   }
 
   .brand-title {
@@ -81,9 +82,17 @@
   }
 
   .topbar-status .pill {
-    padding: 4px 8px;
     font-size: 11px;
     gap: 4px;
+  }
+
+  /* Status pill with dot - equal padding for perfect circle */
+  .topbar-status .pill:has(.statusDot) {
+    padding: 10px;
+    width: 32px;
+    height: 32px;
+    justify-content: center;
+    align-items: center;
   }
 
   .topbar-status .pill .mono {
@@ -357,8 +366,14 @@
   }
 
   .topbar-status .pill {
-    padding: 3px 6px;
     font-size: 10px;
+  }
+
+  /* Status pill with dot - smaller on very small screens */
+  .topbar-status .pill:has(.statusDot) {
+    padding: 8px;
+    width: 28px;
+    height: 28px;
   }
 
   .theme-toggle {
