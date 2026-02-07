@@ -121,13 +121,32 @@ Việt hóa đầy đủ với song ngữ VI/EN:
 ## Version hiện tại
 
 ```
-Current: 2026.2.3
+Current: 2026.2.6
 ```
 
 Cập nhật version trong:
 - `package.json`
 - `ui/src/ui/app-update.ts` (CURRENT_VERSION)
 - `ui/src/ui/app.ts` (currentVersion state)
+
+### Upstream sync 2026.2.6 (cherry-picked)
+
+Cherry-picked 10 priority commits from upstream v2026.2.6:
+
+**Model Support:**
+- Claude Opus 4.6 model catalog + default
+- pi-mono 0.52.5
+- gpt-5.3-codex fallback
+- Opus 4.6 forward-compat fallback
+
+**Security:**
+- exec-approvals: coerce bare string allowlist
+- skill/plugin code safety scanner
+- gateway: require auth for canvas/A2UI assets
+- redact credentials from config.get responses
+
+**Stability:**
+- Cap sessions_history payloads to prevent context overflow
 
 ---
 
