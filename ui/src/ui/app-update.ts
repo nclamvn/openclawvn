@@ -1,7 +1,7 @@
 // Update checker - fetches latest version from GitHub releases
 
 const GITHUB_API_URL = "https://api.github.com/repos/openclaw/openclaw/releases/latest";
-const CURRENT_VERSION = "2026.2.3"; // Should match package.json
+const CURRENT_VERSION = "2026.2.6"; // Should match package.json
 
 export interface UpdateCheckResult {
   available: boolean;
