@@ -22,6 +22,12 @@ export type UiSettings = {
 export function loadSettings(): UiSettings {
   const defaultUrl = (() => {
     const proto = location.protocol === "https:" ? "wss" : "ws";
+    // In dev mode (Vite on localhost with non-gateway port), use the default gateway port
+    const isLocal = location.hostname === "localhost" || location.hostname === "127.0.0.1";
+    const isGatewayPort = location.port === "18789" || location.port === "";
+    if (isLocal && !isGatewayPort) {
+      return "ws://127.0.0.1:18789";
+    }
     return `${proto}://${location.host}`;
   })();
 
@@ -47,10 +53,21 @@ export function loadSettings(): UiSettings {
     }
     const parsed = JSON.parse(raw) as Partial<UiSettings>;
     const settings: UiSettings = {
-      gatewayUrl:
-        typeof parsed.gatewayUrl === "string" && parsed.gatewayUrl.trim()
-          ? parsed.gatewayUrl.trim()
-          : defaults.gatewayUrl,
+      gatewayUrl: (() => {
+        const saved =
+          typeof parsed.gatewayUrl === "string" && parsed.gatewayUrl.trim()
+            ? parsed.gatewayUrl.trim()
+            : defaults.gatewayUrl;
+        // Migrate stale dev-server URLs: if saved URL matches current browser
+        // host (e.g. ws://localhost:3334 when browsing localhost:3334), it was
+        // set by the old default logic and should be replaced with the gateway URL
+        const devUrl = `ws://${location.host}`;
+        const devUrlSecure = `wss://${location.host}`;
+        if (saved === devUrl || saved === devUrlSecure) {
+          return defaults.gatewayUrl;
+        }
+        return saved;
+      })(),
       token: typeof parsed.token === "string" ? parsed.token : defaults.token,
       sessionKey:
         typeof parsed.sessionKey === "string" && parsed.sessionKey.trim()

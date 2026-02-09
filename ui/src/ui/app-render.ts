@@ -244,7 +244,13 @@ export function renderApp(state: AppViewState) {
                   void state.loadAssistantIdentity();
                 },
                 onConnect: () => state.connect(),
-                onRefresh: () => state.loadOverview(),
+                onRefresh: () => {
+                  if (!state.connected) {
+                    state.connect();
+                  } else {
+                    state.loadOverview();
+                  }
+                },
               })
             : nothing
         }

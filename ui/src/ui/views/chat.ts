@@ -381,19 +381,20 @@ function renderModelSelectorDropdown(props: ChatProps) {
               }
             }}
           />
-          <button
-            class="model-api-key-save-btn"
-            type="button"
-            ?disabled=${!currentKey.trim()}
-            @click=${() => {
-              if (currentKey.trim()) {
-                props.onSaveApiKey?.(selectedProvider, currentKey, saveMode === 'permanent');
-              }
-            }}
-          >
-            ${icons.check}
-          </button>
         </div>
+        <button
+          class="model-api-key-save-btn"
+          type="button"
+          ?disabled=${!currentKey.trim()}
+          @click=${() => {
+            if (currentKey.trim()) {
+              props.onSaveApiKey?.(selectedProvider, currentKey, saveMode === 'permanent');
+              props.onToggleModelSelector?.();
+            }
+          }}
+        >
+          ${icons.check} ${t().common.save}
+        </button>
         <div class="model-api-key-hint">
           ${saveMode === 'permanent'
             ? t().chat.saveToAuthProfiles

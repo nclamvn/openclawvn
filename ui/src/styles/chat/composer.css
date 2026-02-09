@@ -507,41 +507,35 @@
 }
 
 .model-api-key-save-btn {
-  position: absolute;
-  right: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 24px;
-  height: 24px;
-  border: none;
-  background: transparent;
-  color: var(--muted, rgba(255, 255, 255, 0.4));
-  border-radius: 4px;
+  gap: 6px;
+  width: 100%;
+  margin-top: 8px;
+  padding: 7px 12px;
+  border: 1px solid var(--border, rgba(255, 255, 255, 0.1));
+  background: var(--accent, #ff5c5c);
+  color: #fff;
+  border-radius: 6px;
   cursor: pointer;
+  font-size: 12px;
+  font-weight: 500;
   transition: all 0.15s ease;
 }
 
-:root[data-theme="light"] .model-api-key-save-btn {
-  color: var(--muted, rgba(0, 0, 0, 0.3));
-}
-
 .model-api-key-save-btn:hover:not(:disabled) {
-  color: var(--accent, #ff5c5c);
+  opacity: 0.85;
 }
 
 .model-api-key-save-btn:disabled {
-  color: var(--muted, rgba(255, 255, 255, 0.2));
+  opacity: 0.4;
   cursor: not-allowed;
 }
 
-:root[data-theme="light"] .model-api-key-save-btn:disabled {
-  color: var(--muted, rgba(0, 0, 0, 0.15));
-}
-
 .model-api-key-save-btn svg {
-  width: 16px;
-  height: 16px;
+  width: 14px;
+  height: 14px;
   stroke: currentColor;
   stroke-width: 2;
   fill: none;
