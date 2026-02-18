@@ -41,6 +41,8 @@ import { incrementCompactionCount } from "./session-updates.js";
 import type { TypingController } from "./typing.js";
 import { createTypingSignaler } from "./typing-mode.js";
 import { emitDiagnosticEvent, isDiagnosticsEnabled } from "../../infra/diagnostic-events.js";
+import { formatSuggestions } from "./post-reply-suggestions.js";
+import { recordSmartRoutingUsage } from "./smart-routing.js";
 
 const BLOCK_REPLY_SEND_TIMEOUT_MS = 15_000;
 
@@ -394,6 +396,21 @@ export async function runReplyAgent(params: {
       cliSessionId,
     });
 
+    // Smart routing usage tracking (fire-and-forget)
+    if (followupRun.run.smartRoutingEnabled) {
+      recordSmartRoutingUsage({
+        userId: followupRun.run.senderId || "anonymous",
+        provider: providerUsed,
+        model: modelUsed,
+        inputTokens: usage?.input ?? 0,
+        outputTokens: usage?.output ?? 0,
+        latencyMs: Date.now() - runStartedAt,
+        classification: followupRun.run.smartRoutingClassification,
+      }).catch((err) => {
+        defaultRuntime.log?.(`smart-routing: usage tracking failed: ${String(err)}`);
+      });
+    }
+
     // Drain any late tool/block deliveries before deciding there's "nothing to send".
     // Otherwise, a late typing trigger (e.g. from a tool callback) can outlive the run and
     // keep the typing indicator stuck.
@@ -510,6 +527,19 @@ export async function runReplyAgent(params: {
     }
     if (responseUsageLine) {
       finalPayloads = appendUsageLine(finalPayloads, responseUsageLine);
+    }
+
+    // Append post-reply suggestions based on intent detection
+    if (followupRun.run.smartRoutingIntentMetadata) {
+      const suffix = formatSuggestions({
+        intentMetadata: followupRun.run.smartRoutingIntentMetadata,
+      });
+      if (suffix && finalPayloads.length > 0) {
+        const last = finalPayloads[finalPayloads.length - 1];
+        if (last.text) {
+          finalPayloads = [...finalPayloads.slice(0, -1), { ...last, text: last.text + suffix }];
+        }
+      }
     }
 
     return finalizeWithFollowup(

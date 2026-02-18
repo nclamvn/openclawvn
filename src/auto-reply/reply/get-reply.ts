@@ -23,6 +23,11 @@ import { initSessionState } from "./session.js";
 import { applyResetModelOverride } from "./session-reset-model.js";
 import { stageSandboxMedia } from "./stage-sandbox-media.js";
 import { createTypingController } from "./typing.js";
+import {
+  resolveSmartRouting,
+  applySmartRouting,
+  type SmartRoutingResult,
+} from "./smart-routing.js";
 
 export async function getReplyFromConfig(
   ctx: MsgContext,
@@ -58,6 +63,26 @@ export async function getReplyFromConfig(
     if (heartbeatRef) {
       provider = heartbeatRef.ref.provider;
       model = heartbeatRef.ref.model;
+    }
+  }
+
+  // Smart routing: classify task and potentially route to a cheaper/faster model
+  const smartRoutingConfig = resolveSmartRouting({ cfg, agentCfg });
+  let smartRoutingResult: SmartRoutingResult | null = null;
+  if (smartRoutingConfig && !opts?.isHeartbeat) {
+    const userBody = ctx.Body || ctx.BodyForAgent || "";
+    if (userBody.trim()) {
+      smartRoutingResult = applySmartRouting({
+        prompt: userBody,
+        currentProvider: provider,
+        currentModel: model,
+        config: smartRoutingConfig,
+        userId: ctx.SenderId || ctx.From || "anonymous",
+      });
+      if (smartRoutingResult) {
+        provider = smartRoutingResult.provider;
+        model = smartRoutingResult.model;
+      }
     }
   }
 
@@ -298,5 +323,6 @@ export async function getReplyFromConfig(
     storePath,
     workspaceDir,
     abortedLastRun,
+    smartRoutingResult,
   });
 }

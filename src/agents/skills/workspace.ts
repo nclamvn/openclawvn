@@ -333,6 +333,27 @@ export function filterWorkspaceSkillEntries(
   return filterSkillEntries(entries, config);
 }
 
+export function applySkillBoost(params: {
+  skillsPrompt: string;
+  boostSkillNames: string[];
+  contextHints: string[];
+}): string {
+  if (!params.boostSkillNames.length && !params.contextHints.length) return params.skillsPrompt;
+
+  const parts: string[] = [];
+  if (params.contextHints.length > 0) {
+    parts.push("## Auto-detected intent context");
+    for (const hint of params.contextHints) parts.push(`- ${hint}`);
+    parts.push("");
+  }
+  if (params.boostSkillNames.length > 0) {
+    parts.push(`Recommended skills for this request: ${params.boostSkillNames.join(", ")}`);
+    parts.push("");
+  }
+  parts.push(params.skillsPrompt);
+  return parts.join("\n");
+}
+
 export function buildWorkspaceSkillCommandSpecs(
   workspaceDir: string,
   opts?: {

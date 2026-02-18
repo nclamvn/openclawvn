@@ -14,6 +14,7 @@ import {
   type ResponsePrefixContext,
 } from "../../auto-reply/reply/response-prefix-template.js";
 import type { MsgContext } from "../../auto-reply/templating.js";
+import { updateSessionStoreEntry } from "../../config/sessions/store.js";
 import { resolveSendPolicy } from "../../sessions/send-policy.js";
 import { INTERNAL_MESSAGE_CHANNEL } from "../../utils/message-channel.js";
 import {
@@ -235,6 +236,7 @@ export const chatHandlers: GatewayRequestHandlers = {
       sessionId,
       messages: capped,
       thinkingLevel,
+      memoryEnabled: entry?.memoryEnabled !== false,
     });
   },
   "chat.abort": ({ params, respond, context }) => {
@@ -368,13 +370,28 @@ export const chatHandlers: GatewayRequestHandlers = {
         return;
       }
     }
-    const { cfg, entry } = loadSessionEntry(p.sessionKey);
+    const { cfg, entry, storePath, canonicalKey } = loadSessionEntry(p.sessionKey);
     const timeoutMs = resolveAgentTimeoutMs({
       cfg,
       overrideMs: p.timeoutMs,
     });
     const now = Date.now();
     const clientRunId = p.idempotencyKey;
+
+    // Bind device to session (fire-and-forget).
+    const connectDeviceId = client?.connect?.device?.id;
+    if (connectDeviceId && storePath) {
+      const devicePatch: Record<string, string> = { deviceId: connectDeviceId };
+      const clientDisplayName = client?.connect?.client?.displayName;
+      if (clientDisplayName) {
+        devicePatch.deviceDisplayName = clientDisplayName;
+      }
+      void updateSessionStoreEntry({
+        storePath,
+        sessionKey: canonicalKey ?? p.sessionKey,
+        update: async () => devicePatch,
+      }).catch(() => {});
+    }
 
     const sendPolicy = resolveSendPolicy({
       cfg,

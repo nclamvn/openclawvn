@@ -1,8 +1,10 @@
+import { auditDeviceEvent, auditTokenEvent } from "../../infra/audit-log.js";
 import {
   approveDevicePairing,
   listDevicePairing,
   type DeviceAuthToken,
   rejectDevicePairing,
+  renewDeviceToken,
   revokeDeviceToken,
   rotateDeviceToken,
   summarizeDeviceTokens,
@@ -87,6 +89,10 @@ export const deviceHandlers: GatewayRequestHandlers = {
       },
       { dropIfSlow: true },
     );
+    auditDeviceEvent("device.paired", {
+      deviceId: approved.device.deviceId,
+      role: approved.device.role ?? "unknown",
+    });
     respond(true, { requestId, device: redactPairedDevice(approved.device) }, undefined);
   },
   "device.pair.reject": async ({ params, respond, context }) => {
@@ -119,6 +125,7 @@ export const deviceHandlers: GatewayRequestHandlers = {
       },
       { dropIfSlow: true },
     );
+    auditDeviceEvent("device.rejected", { deviceId: rejected.deviceId });
     respond(true, rejected, undefined);
   },
   "device.token.rotate": async ({ params, respond, context }) => {
@@ -148,6 +155,7 @@ export const deviceHandlers: GatewayRequestHandlers = {
     context.logGateway.info(
       `device token rotated device=${deviceId} role=${entry.role} scopes=${entry.scopes.join(",")}`,
     );
+    auditTokenEvent("token.rotate", { deviceId, role: entry.role });
     respond(
       true,
       {
@@ -181,9 +189,45 @@ export const deviceHandlers: GatewayRequestHandlers = {
       return;
     }
     context.logGateway.info(`device token revoked device=${deviceId} role=${entry.role}`);
+    auditTokenEvent("token.revoke", { deviceId, role: entry.role });
     respond(
       true,
       { deviceId, role: entry.role, revokedAtMs: entry.revokedAtMs ?? Date.now() },
+      undefined,
+    );
+  },
+  "device.token.renew": async ({ params, respond, context }) => {
+    const deviceId = typeof params.deviceId === "string" ? params.deviceId.trim() : "";
+    const role = typeof params.role === "string" ? params.role.trim() : "";
+    if (!deviceId || !role) {
+      respond(
+        false,
+        undefined,
+        errorShape(ErrorCodes.INVALID_REQUEST, "deviceId and role required"),
+      );
+      return;
+    }
+    const ttlDays = typeof params.ttlDays === "number" ? params.ttlDays : undefined;
+    const entry = await renewDeviceToken({ deviceId, role, ttlDays });
+    if (!entry) {
+      respond(
+        false,
+        undefined,
+        errorShape(ErrorCodes.INVALID_REQUEST, "unknown deviceId/role or token revoked"),
+      );
+      return;
+    }
+    context.logGateway.info(
+      `device token renewed device=${deviceId} role=${entry.role} expiresAtMs=${entry.expiresAtMs ?? "never"}`,
+    );
+    auditTokenEvent("token.renew", { deviceId, role: entry.role });
+    respond(
+      true,
+      {
+        deviceId,
+        role: entry.role,
+        expiresAtMs: entry.expiresAtMs,
+      },
       undefined,
     );
   },

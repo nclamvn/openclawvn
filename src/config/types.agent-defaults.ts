@@ -134,6 +134,18 @@ export type AgentDefaultsConfig = {
   memorySearch?: MemorySearchConfig;
   /** Context Intelligence Engine for optimizing token usage. */
   contextIntelligence?: ContextIntelligenceConfig;
+  /** Smart routing: automatically select the optimal model based on task classification. */
+  smartRouting?: {
+    enabled?: boolean;
+    preferredProvider?: "anthropic" | "openai" | "google";
+    allowDowngrade?: boolean;
+    allowUpgrade?: boolean;
+    trackingEnabled?: boolean;
+    costDisplay?: "off" | "prefix" | "footer";
+    intentDetection?: boolean;
+    skillBoost?: boolean;
+    postReplySuggestions?: boolean;
+  };
   /** Default thinking level when no /think directive is present. */
   thinkingDefault?: "off" | "minimal" | "low" | "medium" | "high" | "xhigh";
   /** Default verbose level when no /verbose directive is present. */

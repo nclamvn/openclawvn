@@ -30,6 +30,15 @@ export function createReplyPrefixContext(params: {
     prefixContext.model = extractShortModelName(ctx.model);
     prefixContext.modelFull = `${ctx.provider}/${ctx.model}`;
     prefixContext.thinkingLevel = ctx.thinkLevel ?? "off";
+
+    // Apply smart routing info if available on the context
+    if (ctx.smartRouting) {
+      prefixContext.taskType = ctx.smartRouting.taskType;
+      prefixContext.taskComplexity = ctx.smartRouting.taskComplexity;
+      if (ctx.smartRouting.estimatedCost != null) {
+        prefixContext.estimatedCost = `$${ctx.smartRouting.estimatedCost.toFixed(4)}`;
+      }
+    }
   };
 
   return {

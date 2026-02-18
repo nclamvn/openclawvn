@@ -167,6 +167,24 @@ export const AgentDefaultsSchema = z
       })
       .strict()
       .optional(),
+    smartRouting: z
+      .object({
+        enabled: z.boolean().optional(),
+        preferredProvider: z
+          .union([z.literal("anthropic"), z.literal("openai"), z.literal("google")])
+          .optional(),
+        allowDowngrade: z.boolean().optional(),
+        allowUpgrade: z.boolean().optional(),
+        trackingEnabled: z.boolean().optional(),
+        costDisplay: z
+          .union([z.literal("off"), z.literal("prefix"), z.literal("footer")])
+          .optional(),
+        intentDetection: z.boolean().optional(),
+        skillBoost: z.boolean().optional(),
+        postReplySuggestions: z.boolean().optional(),
+      })
+      .strict()
+      .optional(),
   })
   .strict()
   .optional();

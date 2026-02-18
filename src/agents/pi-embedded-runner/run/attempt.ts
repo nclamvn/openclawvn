@@ -91,6 +91,7 @@ import { MAX_IMAGE_BYTES } from "../../../media/constants.js";
 import type { EmbeddedRunAttemptParams, EmbeddedRunAttemptResult } from "./types.js";
 import { detectAndLoadPromptImages } from "./images.js";
 import { applyContextIntelligence } from "./context-intelligence-adapter.js";
+import { UserFactStore, resolveUserFactsPath } from "../../../memory/user-fact-store.js";
 
 export function injectHistoryImagesIntoMessages(
   messages: AgentMessage[],
@@ -346,7 +347,7 @@ export async function runEmbeddedAttempt(
     });
     const ttsHint = params.config ? buildTtsSystemPromptHint(params.config) : undefined;
 
-    const appendPrompt = buildEmbeddedSystemPrompt({
+    let appendPrompt = buildEmbeddedSystemPrompt({
       workspaceDir: effectiveWorkspace,
       defaultThinkLevel: params.thinkLevel,
       reasoningLevel: params.reasoningLevel ?? "off",
@@ -372,6 +373,35 @@ export async function runEmbeddedAttempt(
       userTimeFormat,
       contextFiles,
     });
+
+    // --- Memory context injection ---
+    // Default: enabled unless session explicitly disables it.
+    const memoryEnabled = params.memoryEnabled !== false;
+    let memoryInjectedCount = 0;
+    if (memoryEnabled) {
+      try {
+        const factsPath = resolveUserFactsPath(agentDir);
+        const memoryStore = new UserFactStore(factsPath);
+        if (memoryStore.count > 0) {
+          const relevantFacts = memoryStore.getForInjection(params.prompt);
+          if (relevantFacts.length > 0) {
+            const memoryContext = memoryStore.formatForInjection(relevantFacts);
+            appendPrompt = `${memoryContext}\n\n${appendPrompt}`;
+            memoryInjectedCount = relevantFacts.length;
+          }
+        }
+      } catch {
+        // Memory injection is non-blocking; log but don't fail the run
+        log.debug("memory injection skipped: failed to load user facts");
+      }
+    }
+    if (memoryInjectedCount > 0) {
+      params.onAgentEvent?.({
+        stream: "memory",
+        data: { injectedCount: memoryInjectedCount },
+      });
+    }
+
     const systemPromptReport = buildSystemPromptReport({
       source: "run",
       generatedAt: Date.now(),
@@ -916,6 +946,7 @@ export async function runEmbeddedAttempt(
         ),
         // Client tool call detected (OpenResponses hosted tools)
         clientToolCall: clientToolCallDetected ?? undefined,
+        memoryInjectedCount: memoryInjectedCount || undefined,
       };
     } finally {
       // Always tear down the session (and release the lock) before we leave this attempt.

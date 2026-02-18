@@ -318,6 +318,15 @@ export async function applySessionsPatchToStore(params: {
     }
   }
 
+  if ("memoryEnabled" in patch) {
+    const raw = patch.memoryEnabled;
+    if (raw === null) {
+      delete next.memoryEnabled;
+    } else if (raw !== undefined) {
+      next.memoryEnabled = Boolean(raw);
+    }
+  }
+
   if ("sendPolicy" in patch) {
     const raw = patch.sendPolicy;
     if (raw === null) {

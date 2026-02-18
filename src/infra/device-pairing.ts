@@ -28,6 +28,8 @@ export type DeviceAuthToken = {
   rotatedAtMs?: number;
   revokedAtMs?: number;
   lastUsedAtMs?: number;
+  /** Token expiry timestamp. null/undefined = never expires. */
+  expiresAtMs?: number | null;
 };
 
 export type DeviceAuthTokenSummary = {
@@ -37,6 +39,7 @@ export type DeviceAuthTokenSummary = {
   rotatedAtMs?: number;
   revokedAtMs?: number;
   lastUsedAtMs?: number;
+  expiresAtMs?: number | null;
 };
 
 export type PairedDevice = {
@@ -53,6 +56,8 @@ export type PairedDevice = {
   tokens?: Record<string, DeviceAuthToken>;
   createdAtMs: number;
   approvedAtMs: number;
+  /** Last successful connect timestamp. */
+  lastConnectMs?: number;
 };
 
 export type DevicePairingList = {
@@ -66,6 +71,8 @@ type DevicePairingStateFile = {
 };
 
 const PENDING_TTL_MS = 5 * 60 * 1000;
+const DEFAULT_TOKEN_TTL_DAYS = 30;
+const MS_PER_DAY = 86_400_000;
 
 function resolvePaths(baseDir?: string) {
   const root = baseDir ?? resolveStateDir();
@@ -321,6 +328,7 @@ export async function approveDevicePairing(
         rotatedAtMs: existingToken ? now : undefined,
         revokedAtMs: undefined,
         lastUsedAtMs: existingToken?.lastUsedAtMs,
+        expiresAtMs: now + DEFAULT_TOKEN_TTL_DAYS * MS_PER_DAY,
       };
     }
     const device: PairedDevice = {
@@ -402,6 +410,7 @@ export function summarizeDeviceTokens(
       rotatedAtMs: token.rotatedAtMs,
       revokedAtMs: token.revokedAtMs,
       lastUsedAtMs: token.lastUsedAtMs,
+      expiresAtMs: token.expiresAtMs,
     }))
     .toSorted((a, b) => a.role.localeCompare(b.role));
   return summaries.length > 0 ? summaries : undefined;
@@ -430,6 +439,9 @@ export async function verifyDeviceToken(params: {
     }
     if (entry.revokedAtMs) {
       return { ok: false, reason: "token-revoked" };
+    }
+    if (entry.expiresAtMs != null && Date.now() > entry.expiresAtMs) {
+      return { ok: false, reason: "token-expired" };
     }
     if (entry.token !== params.token) {
       return { ok: false, reason: "token-mismatch" };
@@ -480,6 +492,7 @@ export async function ensureDeviceToken(params: {
       rotatedAtMs: existing ? now : undefined,
       revokedAtMs: undefined,
       lastUsedAtMs: existing?.lastUsedAtMs,
+      expiresAtMs: now + DEFAULT_TOKEN_TTL_DAYS * MS_PER_DAY,
     };
     tokens[role] = next;
     device.tokens = tokens;
@@ -493,6 +506,7 @@ export async function rotateDeviceToken(params: {
   deviceId: string;
   role: string;
   scopes?: string[];
+  ttlDays?: number;
   baseDir?: string;
 }): Promise<DeviceAuthToken | null> {
   return await withLock(async () => {
@@ -509,6 +523,7 @@ export async function rotateDeviceToken(params: {
     const existing = tokens[role];
     const requestedScopes = normalizeScopes(params.scopes ?? existing?.scopes ?? device.scopes);
     const now = Date.now();
+    const ttlDays = params.ttlDays ?? DEFAULT_TOKEN_TTL_DAYS;
     const next: DeviceAuthToken = {
       token: newToken(),
       role,
@@ -517,6 +532,7 @@ export async function rotateDeviceToken(params: {
       rotatedAtMs: now,
       revokedAtMs: undefined,
       lastUsedAtMs: existing?.lastUsedAtMs,
+      expiresAtMs: ttlDays > 0 ? now + ttlDays * MS_PER_DAY : null,
     };
     tokens[role] = next;
     device.tokens = tokens;
@@ -554,5 +570,51 @@ export async function revokeDeviceToken(params: {
     state.pairedByDeviceId[device.deviceId] = device;
     await persistState(state, params.baseDir);
     return entry;
+  });
+}
+
+/** Renew (extend) an existing device token's TTL without rotating it. */
+export async function renewDeviceToken(params: {
+  deviceId: string;
+  role: string;
+  ttlDays?: number;
+  baseDir?: string;
+}): Promise<DeviceAuthToken | null> {
+  return await withLock(async () => {
+    const state = await loadState(params.baseDir);
+    const device = state.pairedByDeviceId[normalizeDeviceId(params.deviceId)];
+    if (!device) {
+      return null;
+    }
+    const role = normalizeRole(params.role);
+    if (!role) {
+      return null;
+    }
+    const entry = device.tokens?.[role];
+    if (!entry || entry.revokedAtMs) {
+      return null;
+    }
+    const now = Date.now();
+    const ttlDays = params.ttlDays ?? DEFAULT_TOKEN_TTL_DAYS;
+    entry.expiresAtMs = ttlDays > 0 ? now + ttlDays * MS_PER_DAY : null;
+    device.tokens ??= {};
+    device.tokens[role] = entry;
+    state.pairedByDeviceId[device.deviceId] = device;
+    await persistState(state, params.baseDir);
+    return entry;
+  });
+}
+
+/** Update lastConnectMs on a paired device after successful connect. */
+export async function updateDeviceLastConnect(deviceId: string, baseDir?: string): Promise<void> {
+  return await withLock(async () => {
+    const state = await loadState(baseDir);
+    const device = state.pairedByDeviceId[normalizeDeviceId(deviceId)];
+    if (!device) {
+      return;
+    }
+    device.lastConnectMs = Date.now();
+    state.pairedByDeviceId[device.deviceId] = device;
+    await persistState(state, baseDir);
   });
 }

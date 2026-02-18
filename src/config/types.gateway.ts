@@ -61,6 +61,13 @@ export type TalkConfig = {
   interruptOnSpeech?: boolean;
 };
 
+export type GatewaySecurityConfig = {
+  /** Allowed WebSocket origins. Empty array or omitted = allow all. */
+  allowedOrigins?: string[];
+  /** Enforce IP consistency for paired devices (default: false). */
+  strictIpEnforcement?: boolean;
+};
+
 export type GatewayControlUiConfig = {
   /** If false, the Gateway will not serve the Control UI (default /). */
   enabled?: boolean;
@@ -232,6 +239,7 @@ export type GatewayConfig = {
   /** Custom IP address for bind="custom" mode. Fallback: 0.0.0.0. */
   customBindHost?: string;
   controlUi?: GatewayControlUiConfig;
+  security?: GatewaySecurityConfig;
   auth?: GatewayAuthConfig;
   tailscale?: GatewayTailscaleConfig;
   remote?: GatewayRemoteConfig;

@@ -16,6 +16,12 @@ export type ResponsePrefixContext = {
   thinkingLevel?: string;
   /** Agent identity name */
   identityName?: string;
+  /** Estimated cost from smart routing (e.g., "$0.0012") */
+  estimatedCost?: string;
+  /** Task type from smart routing classifier (e.g., "coding") */
+  taskType?: string;
+  /** Task complexity from smart routing classifier (e.g., "complex") */
+  taskComplexity?: string;
 };
 
 // Regex pattern for template variables: {variableName} or {variable.name}
@@ -59,6 +65,15 @@ export function resolveResponsePrefixTemplate(
       case "identity.name":
       case "identityname":
         return context.identityName ?? match;
+      case "cost":
+      case "estimatedcost":
+        return context.estimatedCost ?? match;
+      case "task":
+      case "tasktype":
+        return context.taskType ?? match;
+      case "complexity":
+      case "taskcomplexity":
+        return context.taskComplexity ?? match;
       default:
         // Leave unrecognized variables as-is
         return match;

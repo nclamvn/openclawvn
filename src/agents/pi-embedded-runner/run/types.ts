@@ -80,6 +80,8 @@ export type EmbeddedRunAttemptParams = {
   onToolResult?: (payload: { text?: string; mediaUrls?: string[] }) => void | Promise<void>;
   onAgentEvent?: (evt: { stream: string; data: Record<string, unknown> }) => void;
   extraSystemPrompt?: string;
+  /** Whether memory injection is enabled for this run. Defaults to true. */
+  memoryEnabled?: boolean;
   streamParams?: AgentStreamParams;
   ownerNumbers?: string[];
   enforceFinalTag?: boolean;
@@ -102,4 +104,6 @@ export type EmbeddedRunAttemptResult = {
   cloudCodeAssistFormatError: boolean;
   /** Client tool call detected (OpenResponses hosted tools). */
   clientToolCall?: { name: string; params: Record<string, unknown> };
+  /** Number of user facts injected into the system prompt for this run. */
+  memoryInjectedCount?: number;
 };

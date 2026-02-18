@@ -12,6 +12,7 @@ import {
   ensureDeviceToken,
   getPairedDevice,
   requestDevicePairing,
+  updateDeviceLastConnect,
   updatePairedDeviceMetadata,
   verifyDeviceToken,
 } from "../../../infra/device-pairing.js";
@@ -19,6 +20,14 @@ import { updatePairedNodeMetadata } from "../../../infra/node-pairing.js";
 import { recordRemoteNodeInfo, refreshRemoteNodeBins } from "../../../infra/skills-remote.js";
 import { loadVoiceWakeConfig } from "../../../infra/voicewake.js";
 import { upsertPresence } from "../../../infra/system-presence.js";
+import {
+  auditAuthFailure,
+  auditAuthSuccess,
+  auditCorsRejected,
+  auditIpEvent,
+  auditRateLimited,
+} from "../../../infra/audit-log.js";
+import { getAuthRateLimiter } from "../../../infra/rate-limiter.js";
 import { rawDataToString } from "../../../infra/ws.js";
 import type { createSubsystemLogger } from "../../../logging/subsystem.js";
 import { isGatewayCliClient, isWebchatClient } from "../../../utils/message-channel.js";
@@ -228,6 +237,36 @@ export function attachGatewayWsMessageHandler(params: {
         "Treating it as remote. If you're behind a reverse proxy, " +
         "set gateway.trustedProxies and forward X-Forwarded-For/X-Real-IP.",
     );
+  }
+
+  // --- CORS origin validation ---
+  const allowedOrigins = configSnapshot.gateway?.security?.allowedOrigins ?? [];
+  if (!isLocalClient && allowedOrigins.length > 0 && requestOrigin) {
+    let originUrl: URL | null = null;
+    try {
+      originUrl = new URL(requestOrigin);
+    } catch {
+      // malformed origin
+    }
+    const originAllowed =
+      originUrl &&
+      allowedOrigins.some((allowed) => {
+        try {
+          const allowedUrl = new URL(allowed);
+          return allowedUrl.origin === originUrl!.origin;
+        } catch {
+          // plain hostname comparison
+          return originUrl!.hostname === allowed;
+        }
+      });
+    if (!originAllowed) {
+      logWsControl.warn(
+        `CORS rejected conn=${connId} origin=${requestOrigin} ip=${clientIp ?? "?"}`,
+      );
+      auditCorsRejected({ ip: clientIp, detail: `origin=${requestOrigin}` });
+      close(1008, "origin not allowed");
+      return;
+    }
   }
 
   const isWebchatConnect = (p: ConnectParams | null | undefined) => isWebchatClient(p?.client);
@@ -569,6 +608,34 @@ export function attachGatewayWsMessageHandler(params: {
           }
         }
 
+        // --- Rate limiting (skip for local/loopback clients) ---
+        if (!isLocalClient && clientIp) {
+          const rateLimiter = getAuthRateLimiter();
+          const rateCheck = rateLimiter.checkAndRecord(clientIp);
+          if (!rateCheck.allowed) {
+            setHandshakeState("failed");
+            setCloseCause("rate-limited", {
+              ip: clientIp,
+              retryAfterMs: rateCheck.retryAfterMs,
+            });
+            logWsControl.warn(
+              `rate limited conn=${connId} ip=${clientIp} retryAfterMs=${rateCheck.retryAfterMs}`,
+            );
+            send({
+              type: "res",
+              id: frame.id,
+              ok: false,
+              error: errorShape(ErrorCodes.INVALID_REQUEST, "rate limited", {
+                retryable: true,
+                retryAfterMs: rateCheck.retryAfterMs,
+              }),
+            });
+            auditRateLimited({ ip: clientIp, detail: `retryAfterMs=${rateCheck.retryAfterMs}` });
+            close(1008, "rate limited");
+            return;
+          }
+        }
+
         const authResult = await authorizeGatewayConnect({
           auth: resolvedAuth,
           connectAuth: connectParams.auth,
@@ -622,8 +689,23 @@ export function attachGatewayWsMessageHandler(params: {
             ok: false,
             error: errorShape(ErrorCodes.INVALID_REQUEST, authMessage),
           });
+          auditAuthFailure({
+            ip: clientIp,
+            detail: `reason=${authResult.reason ?? "unknown"} client=${connectParams.client.id}`,
+          });
           close(1008, truncateCloseReason(authMessage));
           return;
+        }
+
+        // Auth succeeded — clear rate limit record.
+        if (!isLocalClient && clientIp) {
+          getAuthRateLimiter().recordSuccess(clientIp);
+          auditAuthSuccess({
+            ip: clientIp,
+            deviceId: device?.id,
+            role: connectParams.role ?? "operator",
+            scopes: connectParams.scopes,
+          });
         }
 
         const skipPairing = allowControlUiBypass && hasSharedAuth;
@@ -691,6 +773,44 @@ export function attachGatewayWsMessageHandler(params: {
               return;
             }
           } else {
+            // --- Remote IP enforcement ---
+            const strictIp = configSnapshot.gateway?.security?.strictIpEnforcement === true;
+            if (reportedClientIp && paired.remoteIp && reportedClientIp !== paired.remoteIp) {
+              if (strictIp) {
+                logWsControl.warn(
+                  `IP rejected (strict) conn=${connId} device=${device.id} expected=${paired.remoteIp} got=${reportedClientIp}`,
+                );
+                auditIpEvent("ip.rejected", {
+                  deviceId: device.id,
+                  ip: reportedClientIp,
+                  detail: `expected=${paired.remoteIp}`,
+                });
+                setHandshakeState("failed");
+                setCloseCause("ip-rejected", {
+                  deviceId: device.id,
+                  expected: paired.remoteIp,
+                  actual: reportedClientIp,
+                });
+                send({
+                  type: "res",
+                  id: frame.id,
+                  ok: false,
+                  error: errorShape(ErrorCodes.INVALID_REQUEST, "device IP mismatch"),
+                });
+                close(1008, "device IP mismatch");
+                return;
+              } else {
+                logWsControl.warn(
+                  `IP mismatch (soft) conn=${connId} device=${device.id} prev=${paired.remoteIp} now=${reportedClientIp}`,
+                );
+                auditIpEvent("ip.mismatch", {
+                  deviceId: device.id,
+                  ip: reportedClientIp,
+                  detail: `prev=${paired.remoteIp}`,
+                });
+              }
+            }
+
             const allowedRoles = new Set(
               Array.isArray(paired.roles) ? paired.roles : paired.role ? [paired.role] : [],
             );
@@ -735,6 +855,8 @@ export function attachGatewayWsMessageHandler(params: {
               remoteIp: reportedClientIp,
             });
           }
+          // Update last connect timestamp.
+          void updateDeviceLastConnect(device.id).catch(() => {});
         }
 
         const deviceToken = device
@@ -825,6 +947,12 @@ export function attachGatewayWsMessageHandler(params: {
             maxBufferedBytes: MAX_BUFFERED_BYTES,
             tickIntervalMs: TICK_INTERVAL_MS,
           },
+          insecureMode: allowControlUiBypass
+            ? {
+                allowInsecureAuth: allowInsecureControlUi,
+                disableDeviceAuth: disableControlUiDeviceAuth,
+              }
+            : undefined,
         };
 
         clearHandshakeTimer();

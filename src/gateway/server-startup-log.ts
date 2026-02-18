@@ -2,6 +2,7 @@ import chalk from "chalk";
 import { DEFAULT_MODEL, DEFAULT_PROVIDER } from "../agents/defaults.js";
 import { resolveConfiguredModelRef } from "../agents/model-selection.js";
 import type { loadConfig } from "../config/config.js";
+import { auditInsecureMode } from "../infra/audit-log.js";
 import { getResolvedLoggerSettings } from "../logging.js";
 
 export function logGatewayStartup(params: {
@@ -36,5 +37,33 @@ export function logGatewayStartup(params: {
   params.log.info(`log file: ${getResolvedLoggerSettings().file}`);
   if (params.isNixMode) {
     params.log.info("gateway: running in Nix mode (config managed externally)");
+  }
+
+  // Security warnings for dangerous config flags
+  const controlUi = params.cfg.gateway?.controlUi;
+  if (controlUi?.allowInsecureAuth === true) {
+    params.log.info(
+      "WARNING: gateway.controlUi.allowInsecureAuth is enabled — token-only auth over insecure HTTP",
+      {
+        consoleMessage: chalk.yellow(
+          "WARNING: gateway.controlUi.allowInsecureAuth is enabled — token-only auth over insecure HTTP",
+        ),
+      },
+    );
+  }
+  if (controlUi?.dangerouslyDisableDeviceAuth === true) {
+    params.log.info(
+      "WARNING: gateway.controlUi.dangerouslyDisableDeviceAuth is enabled — device identity checks disabled",
+      {
+        consoleMessage: chalk.red(
+          "WARNING: gateway.controlUi.dangerouslyDisableDeviceAuth is enabled — device identity checks disabled",
+        ),
+      },
+    );
+  }
+  if (controlUi?.allowInsecureAuth === true || controlUi?.dangerouslyDisableDeviceAuth === true) {
+    auditInsecureMode({
+      detail: `allowInsecureAuth=${controlUi?.allowInsecureAuth ?? false} dangerouslyDisableDeviceAuth=${controlUi?.dangerouslyDisableDeviceAuth ?? false}`,
+    });
   }
 }

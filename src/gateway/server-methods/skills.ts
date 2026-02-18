@@ -4,6 +4,10 @@ import { buildWorkspaceSkillStatus } from "../../agents/skills-status.js";
 import { loadWorkspaceSkillEntries, type SkillEntry } from "../../agents/skills.js";
 import type { OpenClawConfig } from "../../config/config.js";
 import { loadConfig, writeConfigFile } from "../../config/config.js";
+import { normalizePluginsConfig } from "../../plugins/config-state.js";
+import { discoverOpenClawPlugins } from "../../plugins/discovery.js";
+import { loadPluginManifest, type PluginManifest } from "../../plugins/manifest.js";
+import type { PluginKind, PluginOrigin } from "../../plugins/types.js";
 import { getRemoteSkillEligibility } from "../../infra/skills-remote.js";
 import {
   ErrorCodes,
@@ -195,4 +199,204 @@ export const skillsHandlers: GatewayRequestHandlers = {
     await writeConfigFile(nextConfig);
     respond(true, { ok: true, skillKey: p.skillKey, config: current }, undefined);
   },
+  "skills.catalog": ({ params, respond }) => {
+    try {
+      const filterKind = typeof params.kind === "string" ? params.kind : undefined;
+      const filterInstalled = typeof params.installed === "boolean" ? params.installed : undefined;
+
+      const cfg = loadConfig();
+      const workspaceDir = resolveAgentWorkspaceDir(cfg, resolveDefaultAgentId(cfg));
+      const pluginsConfig = normalizePluginsConfig(cfg.plugins);
+      const extraPaths = pluginsConfig.loadPaths;
+
+      const { candidates } = discoverOpenClawPlugins({ workspaceDir, extraPaths });
+
+      const skills: SkillCatalogEntry[] = [];
+      const seen = new Set<string>();
+
+      for (const candidate of candidates) {
+        const manifestResult = loadPluginManifest(candidate.rootDir);
+        if (!manifestResult.ok) continue;
+        const manifest = manifestResult.manifest;
+        if (seen.has(manifest.id)) continue;
+        seen.add(manifest.id);
+
+        const entry = buildCatalogEntry(manifest, candidate.origin, pluginsConfig, cfg);
+
+        if (filterKind && entry.kind !== filterKind) continue;
+        if (filterInstalled === true && !entry.installed) continue;
+        if (filterInstalled === false && entry.installed) continue;
+
+        skills.push(entry);
+      }
+
+      // Sort: installed first, then alphabetical
+      skills.sort((a, b) => {
+        if (a.installed !== b.installed) return a.installed ? -1 : 1;
+        return (a.name || a.id).localeCompare(b.name || b.id);
+      });
+
+      respond(true, { skills }, undefined);
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
+  "skills.configSchema": ({ params, respond }) => {
+    try {
+      const skillId = typeof params.skillId === "string" ? params.skillId.trim() : "";
+      if (!skillId) {
+        respond(false, undefined, errorShape(ErrorCodes.INVALID_REQUEST, "skillId required"));
+        return;
+      }
+
+      const cfg = loadConfig();
+      const workspaceDir = resolveAgentWorkspaceDir(cfg, resolveDefaultAgentId(cfg));
+      const pluginsConfig = normalizePluginsConfig(cfg.plugins);
+      const { candidates } = discoverOpenClawPlugins({
+        workspaceDir,
+        extraPaths: pluginsConfig.loadPaths,
+      });
+
+      let manifest: PluginManifest | null = null;
+      for (const candidate of candidates) {
+        const result = loadPluginManifest(candidate.rootDir);
+        if (result.ok && result.manifest.id === skillId) {
+          manifest = result.manifest;
+          break;
+        }
+      }
+
+      if (!manifest) {
+        respond(
+          true,
+          {
+            skillId,
+            configSchema: null,
+            uiHints: null,
+            currentConfig: null,
+          },
+          undefined,
+        );
+        return;
+      }
+
+      const configSchema = manifest.configSchema ?? null;
+      const hasProperties =
+        configSchema &&
+        typeof configSchema === "object" &&
+        "properties" in configSchema &&
+        Object.keys(configSchema.properties as object).length > 0;
+
+      // Get current config from plugins.entries OR skills.entries
+      const pluginEntry = cfg.plugins?.entries?.[skillId];
+      const skillEntry = cfg.skills?.entries?.[skillId];
+      const currentConfig = pluginEntry?.config ?? skillEntry ?? null;
+
+      respond(
+        true,
+        {
+          skillId,
+          configSchema: hasProperties ? configSchema : null,
+          uiHints: manifest.uiHints ?? null,
+          currentConfig,
+        },
+        undefined,
+      );
+    } catch (err) {
+      respond(false, undefined, errorShape(ErrorCodes.UNAVAILABLE, String(err)));
+    }
+  },
 };
+
+// ─── Catalog helpers ─────────────────────────────────────
+
+export type SkillCatalogEntry = {
+  id: string;
+  name: string;
+  kind: PluginKind | null;
+  description: string;
+  version: string | null;
+  installed: boolean;
+  enabled: boolean;
+  hasConfig: boolean;
+  source: PluginOrigin;
+  status: "active" | "disabled" | "needsConfig" | "error" | "notInstalled";
+  channels?: string[];
+  providers?: string[];
+};
+
+function buildCatalogEntry(
+  manifest: PluginManifest,
+  origin: PluginOrigin,
+  pluginsConfig: ReturnType<typeof normalizePluginsConfig>,
+  cfg: OpenClawConfig,
+): SkillCatalogEntry {
+  const id = manifest.id;
+  const pluginEntry = pluginsConfig.entries[id];
+  const skillEntry = cfg.skills?.entries?.[id];
+  const installed = pluginEntry !== undefined || skillEntry !== undefined;
+
+  // Determine enabled state
+  let enabled = false;
+  if (installed) {
+    if (pluginEntry?.enabled === true) {
+      enabled = true;
+    } else if (pluginEntry?.enabled === false) {
+      enabled = false;
+    } else if (skillEntry?.enabled === true) {
+      enabled = true;
+    } else if (skillEntry?.enabled === false) {
+      enabled = false;
+    } else {
+      // Not explicitly set — use origin defaults
+      enabled = origin !== "bundled";
+    }
+  }
+
+  const configSchema = manifest.configSchema;
+  const hasConfig =
+    configSchema != null &&
+    typeof configSchema === "object" &&
+    "properties" in configSchema &&
+    Object.keys(configSchema.properties as object).length > 0;
+
+  // Determine status
+  let status: SkillCatalogEntry["status"] = "notInstalled";
+  if (installed && enabled) {
+    // Check if required config is missing
+    const required =
+      configSchema && "required" in configSchema && Array.isArray(configSchema.required)
+        ? (configSchema.required as string[])
+        : [];
+    const currentConfig =
+      (pluginEntry?.config as Record<string, unknown> | undefined) ?? skillEntry ?? {};
+    const missingRequired = required.some(
+      (key) => currentConfig[key] === undefined || currentConfig[key] === "",
+    );
+    status = missingRequired && required.length > 0 ? "needsConfig" : "active";
+  } else if (installed) {
+    status = "disabled";
+  }
+
+  // Infer kind from manifest hints when kind is not set
+  let kind: PluginKind | null = manifest.kind ?? null;
+  if (!kind) {
+    if (manifest.channels && manifest.channels.length > 0) kind = "channel";
+    else if (manifest.providers && manifest.providers.length > 0) kind = "provider";
+  }
+
+  return {
+    id,
+    name: manifest.name ?? id,
+    kind,
+    description: manifest.description ?? "",
+    version: manifest.version ?? null,
+    installed,
+    enabled,
+    hasConfig,
+    source: origin,
+    status,
+    channels: manifest.channels,
+    providers: manifest.providers,
+  };
+}

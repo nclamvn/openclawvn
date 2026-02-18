@@ -43,6 +43,7 @@ import { resolveQueueSettings } from "./queue.js";
 import { ensureSkillSnapshot, prependSystemEvents } from "./session-updates.js";
 import type { TypingController } from "./typing.js";
 import { resolveTypingMode } from "./typing-mode.js";
+import { resolveSmartRouting, type SmartRoutingResult } from "./smart-routing.js";
 
 type AgentDefaults = NonNullable<OpenClawConfig["agents"]>["defaults"];
 type ExecOverrides = Pick<ExecToolDefaults, "host" | "security" | "ask" | "node">;
@@ -102,6 +103,7 @@ type RunPreparedReplyParams = {
   storePath?: string;
   workspaceDir: string;
   abortedLastRun: boolean;
+  smartRoutingResult?: SmartRoutingResult | null;
 };
 
 export async function runPreparedReply(
@@ -396,7 +398,15 @@ export async function runPreparedReply(
       blockReplyBreak: resolvedBlockStreamingBreak,
       ownerNumbers: command.ownerList.length > 0 ? command.ownerList : undefined,
       extraSystemPrompt: extraSystemPrompt || undefined,
+      memoryEnabled: sessionEntry?.memoryEnabled,
       ...(isReasoningTagProvider(provider) ? { enforceFinalTag: true } : {}),
+      smartRoutingEnabled: Boolean(params.smartRoutingResult),
+      smartRoutingClassification: params.smartRoutingResult?.classification,
+      smartRoutingEstimatedCost: params.smartRoutingResult?.routingDecision.estimatedCost,
+      smartRoutingCostDisplay: params.smartRoutingResult
+        ? (resolveSmartRouting({ cfg, agentCfg: params.agentCfg })?.costDisplay ?? "off")
+        : undefined,
+      smartRoutingIntentMetadata: params.smartRoutingResult?.intentMetadata,
     },
   };
 

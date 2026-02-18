@@ -31,6 +31,7 @@ import type { TemplateContext } from "../templating.js";
 import type { VerboseLevel } from "../thinking.js";
 import { isSilentReplyText, SILENT_REPLY_TOKEN } from "../tokens.js";
 import type { GetReplyOptions, ReplyPayload } from "../types.js";
+import { applySkillBoost } from "../../agents/skills/workspace.js";
 import { buildThreadingToolContext, resolveEnforceFinalTag } from "./agent-runner-utils.js";
 import { createBlockReplyPayloadKey, type BlockReplyPipeline } from "./block-reply-pipeline.js";
 import type { FollowupRun } from "./queue.js";
@@ -158,6 +159,15 @@ export async function runAgentTurnWithFallback(params: {
             provider,
             model,
             thinkLevel: params.followupRun.run.thinkLevel,
+            ...(params.followupRun.run.smartRoutingEnabled
+              ? {
+                  smartRouting: {
+                    taskType: params.followupRun.run.smartRoutingClassification?.type,
+                    taskComplexity: params.followupRun.run.smartRoutingClassification?.complexity,
+                    estimatedCost: params.followupRun.run.smartRoutingEstimatedCost,
+                  },
+                }
+              : {}),
           });
 
           if (isCliProvider(provider, params.followupRun.run.config)) {
@@ -254,9 +264,28 @@ export async function runAgentTurnWithFallback(params: {
             workspaceDir: params.followupRun.run.workspaceDir,
             agentDir: params.followupRun.run.agentDir,
             config: params.followupRun.run.config,
-            skillsSnapshot: params.followupRun.run.skillsSnapshot,
+            skillsSnapshot: (() => {
+              const snapshot = params.followupRun.run.skillsSnapshot;
+              const intent = params.followupRun.run.smartRoutingIntentMetadata;
+              if (
+                !snapshot ||
+                !intent ||
+                (!intent.boostSkills.length && !intent.contextHints.length)
+              ) {
+                return snapshot;
+              }
+              return {
+                ...snapshot,
+                prompt: applySkillBoost({
+                  skillsPrompt: snapshot.prompt ?? "",
+                  boostSkillNames: intent.boostSkills,
+                  contextHints: intent.contextHints,
+                }),
+              };
+            })(),
             prompt: params.commandBody,
             extraSystemPrompt: params.followupRun.run.extraSystemPrompt,
+            memoryEnabled: params.followupRun.run.memoryEnabled,
             ownerNumbers: params.followupRun.run.ownerNumbers,
             enforceFinalTag: resolveEnforceFinalTag(params.followupRun.run, provider),
             provider,

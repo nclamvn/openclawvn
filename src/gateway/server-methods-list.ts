@@ -36,6 +36,8 @@ const BASE_METHODS = [
   "skills.bins",
   "skills.install",
   "skills.update",
+  "skills.catalog",
+  "skills.configSchema",
   "update.run",
   "voicewake.get",
   "voicewake.set",
@@ -82,6 +84,13 @@ const BASE_METHODS = [
   "chat.history",
   "chat.abort",
   "chat.send",
+  // Memory (user facts)
+  "memory.list",
+  "memory.search",
+  "memory.update",
+  "memory.delete",
+  "memory.extract",
+  "memory.inject",
 ];
 
 export function listGatewayMethods(): string[] {

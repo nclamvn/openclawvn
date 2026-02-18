@@ -4,6 +4,7 @@ import type { SessionEntry } from "../../../config/sessions.js";
 import type { OriginatingChannelType } from "../../templating.js";
 import type { ElevatedLevel, ReasoningLevel, ThinkLevel, VerboseLevel } from "../directives.js";
 import type { ExecToolDefaults } from "../../../agents/bash-tools.js";
+import type { IntentMetadata, TaskClassification } from "../../../bom-optimizer/types.js";
 
 export type QueueMode = "steer" | "followup" | "collect" | "steer-backlog" | "interrupt" | "queue";
 
@@ -77,7 +78,13 @@ export type FollowupRun = {
     blockReplyBreak: "text_end" | "message_end";
     ownerNumbers?: string[];
     extraSystemPrompt?: string;
+    memoryEnabled?: boolean;
     enforceFinalTag?: boolean;
+    smartRoutingEnabled?: boolean;
+    smartRoutingClassification?: TaskClassification;
+    smartRoutingEstimatedCost?: number;
+    smartRoutingCostDisplay?: string;
+    smartRoutingIntentMetadata?: IntentMetadata;
   };
 };
 

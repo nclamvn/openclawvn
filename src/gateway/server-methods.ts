@@ -1,4 +1,6 @@
+import { auditScopeViolation } from "../infra/audit-log.js";
 import { ErrorCodes, errorShape } from "./protocol/index.js";
+import { auditHandlers } from "./server-methods/audit.js";
 import { agentHandlers } from "./server-methods/agent.js";
 import { agentsHandlers } from "./server-methods/agents.js";
 import { browserHandlers } from "./server-methods/browser.js";
@@ -24,6 +26,7 @@ import { updateHandlers } from "./server-methods/update.js";
 import { usageHandlers } from "./server-methods/usage.js";
 import { voicewakeHandlers } from "./server-methods/voicewake.js";
 import { webHandlers } from "./server-methods/web.js";
+import { memoryHandlers } from "./server-methods/memory.js";
 import { wizardHandlers } from "./server-methods/wizard.js";
 
 const ADMIN_SCOPE = "operator.admin";
@@ -45,6 +48,7 @@ const PAIRING_METHODS = new Set([
   "device.pair.reject",
   "device.token.rotate",
   "device.token.revoke",
+  "device.token.renew",
   "node.rename",
 ]);
 const ADMIN_METHOD_PREFIXES = ["exec.approvals."];
@@ -61,6 +65,8 @@ const READ_METHODS = new Set([
   "agents.list",
   "agent.identity.get",
   "skills.status",
+  "skills.catalog",
+  "skills.configSchema",
   "voicewake.get",
   "sessions.list",
   "sessions.preview",
@@ -72,6 +78,10 @@ const READ_METHODS = new Set([
   "node.list",
   "node.describe",
   "chat.history",
+  "memory.list",
+  "memory.search",
+  "memory.inject",
+  "audit.list",
 ]);
 const WRITE_METHODS = new Set([
   "send",
@@ -88,6 +98,9 @@ const WRITE_METHODS = new Set([
   "chat.send",
   "chat.abort",
   "browser.request",
+  "memory.update",
+  "memory.delete",
+  "memory.extract",
 ]);
 
 function authorizeGatewayMethod(method: string, client: GatewayRequestOptions["client"]) {
@@ -185,6 +198,8 @@ export const coreGatewayHandlers: GatewayRequestHandlers = {
   ...agentHandlers,
   ...agentsHandlers,
   ...browserHandlers,
+  ...memoryHandlers,
+  ...auditHandlers,
 };
 
 export async function handleGatewayRequest(
@@ -193,6 +208,18 @@ export async function handleGatewayRequest(
   const { req, respond, client, isWebchatConnect, context } = opts;
   const authError = authorizeGatewayMethod(req.method, client);
   if (authError) {
+    const deviceId = client?.connect?.device?.id ?? "unknown";
+    const role = client?.connect?.role ?? "unknown";
+    const scopes = client?.connect?.scopes?.join(",") ?? "";
+    context.logGateway.warn(
+      `scope violation method=${req.method} role=${role} scopes=${scopes} device=${deviceId}`,
+    );
+    auditScopeViolation({
+      method: req.method,
+      deviceId: deviceId !== "unknown" ? deviceId : undefined,
+      role: role !== "unknown" ? role : undefined,
+      scopes: client?.connect?.scopes,
+    });
     respond(false, undefined, authError);
     return;
   }

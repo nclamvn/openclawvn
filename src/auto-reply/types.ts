@@ -11,6 +11,12 @@ export type ModelSelectedContext = {
   provider: string;
   model: string;
   thinkLevel: string | undefined;
+  /** Smart routing metadata (set when smart routing is enabled). */
+  smartRouting?: {
+    taskType?: string;
+    taskComplexity?: string;
+    estimatedCost?: number;
+  };
 };
 
 export type GetReplyOptions = {

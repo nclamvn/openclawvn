@@ -35,7 +35,7 @@ export type PluginConfigUiHint = {
   placeholder?: string;
 };
 
-export type PluginKind = "memory";
+export type PluginKind = "memory" | "skill" | "tool" | "channel" | "service" | "provider";
 
 export type PluginConfigValidation =
   | { ok: true; value?: unknown }
