@@ -1,0 +1,50 @@
+{
+  "music": {
+    "default_playlist": "bolero_mix",
+    "playlists": {
+      "bolero_mix": {
+        "name": "Bolero Tuyen Chon",
+        "sources": [
+          { "type": "note", "value": "Them URL nhac / file local tai day. VD: /media/music/bolero/" }
+        ]
+      },
+      "cai_luong": {
+        "name": "Cai Luong Hay",
+        "sources": []
+      },
+      "nhac_xua": {
+        "name": "Nhac Xua Truoc 75",
+        "sources": []
+      }
+    },
+    "volume": 0.9,
+    "shuffle": true
+  },
+  "stories": {
+    "directory": "skills/eldercare-companion/stories/",
+    "tts_rate": 0.8,
+    "tts_voice": "vi-VN-HoaiMyNeural",
+    "tts_language": "vi",
+    "paragraph_pause_seconds": 2,
+    "chapter_pause_seconds": 5
+  },
+  "reminders": {
+    "enabled": true,
+    "skip_during_nap": true,
+    "skip_during_call": true,
+    "skip_during_sos": true,
+    "nap_hours": { "start": 13, "end": 15 }
+  },
+  "voice_commands": {
+    "enabled": true,
+    "fuzzy_threshold_levenshtein": 2,
+    "confirm_on_fuzzy": true,
+    "max_retries": 2,
+    "listen_timeout_seconds": 10
+  },
+  "tts_defaults": {
+    "volume": 1.0,
+    "rate": 0.8,
+    "language": "vi"
+  }
+}

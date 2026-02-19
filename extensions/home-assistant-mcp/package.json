@@ -1,0 +1,14 @@
+{
+  "name": "@openclaw/home-assistant-mcp",
+  "version": "0.1.0",
+  "description": "Home Assistant integration for OpenClaw — eldercare monitoring",
+  "type": "module",
+  "dependencies": {
+    "openclaw": "workspace:*"
+  },
+  "openclaw": {
+    "extensions": [
+      "./index.ts"
+    ]
+  }
+}

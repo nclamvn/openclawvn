@@ -1,0 +1,8 @@
+{
+  "id": "home-assistant-mcp",
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

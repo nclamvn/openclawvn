@@ -1,0 +1,28 @@
+{
+  "tablet": {
+    "ip": "192.168.1.xxx",
+    "fully_kiosk_password": "changeme",
+    "zalo_package": "com.zing.zalo",
+    "note": "Chu nha can cap nhat IP tablet thuc te"
+  },
+  "grandma_zalo_contact": {
+    "phone": "0xxx",
+    "name": "Ba Noi",
+    "note": "Tai khoan Zalo dang nhap san tren tablet"
+  },
+  "whitelist": [
+    { "name": "Con Lan", "zalo_id": "", "note": "Can dien Zalo ID thuc" },
+    { "name": "Con Minh", "zalo_id": "" }
+  ],
+  "schedule": {
+    "morning_reminder": true,
+    "morning_reminder_time": "08:00",
+    "morning_followup_time": "09:00",
+    "quiet_hours_start": "22:00",
+    "quiet_hours_end": "06:00"
+  },
+  "pre_call_delay_seconds": 5,
+  "tts_volume": 1.0,
+  "motion_threshold_awake_min": 15,
+  "motion_threshold_sleep_min": 30
+}

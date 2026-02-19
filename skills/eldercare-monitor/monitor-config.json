@@ -1,0 +1,29 @@
+{
+  "sleep_hours": { "start": 22, "end": 6 },
+  "nap_hours": { "start": 13, "end": 15 },
+  "thresholds": {
+    "no_motion_attention_min": 30,
+    "no_motion_warning_min": 60,
+    "no_presence_warning_min": 120,
+    "temp_min_c": 20,
+    "temp_max_c": 35,
+    "humidity_min_pct": 40,
+    "humidity_max_pct": 80,
+    "cooldown_between_alerts_min": 15,
+    "post_call_extended_threshold_min": 45
+  },
+  "entities": {
+    "presence": "binary_sensor.grandma_room_presence",
+    "motion_minutes": "sensor.grandma_room_motion_minutes",
+    "temperature": "sensor.grandma_room_temperature",
+    "humidity": "sensor.grandma_room_humidity",
+    "camera_motion": "binary_sensor.grandma_room_camera_motion"
+  },
+  "contacts": [
+    {
+      "name": "Chua config",
+      "priority": 1,
+      "note": "Chu nha can cap nhat thong tin contact thuc te trong memory eldercare_contacts"
+    }
+  ]
+}
