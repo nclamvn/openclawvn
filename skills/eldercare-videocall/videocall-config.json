@@ -7,12 +7,12 @@
   },
   "grandma_zalo_contact": {
     "phone": "0xxx",
-    "name": "Ba Noi",
+    "name": "Care Recipient",
     "note": "Tai khoan Zalo dang nhap san tren tablet"
   },
   "whitelist": [
-    { "name": "Con Lan", "zalo_id": "", "note": "Can dien Zalo ID thuc" },
-    { "name": "Con Minh", "zalo_id": "" }
+    { "name": "Family Member 1", "zalo_id": "", "note": "Can dien Zalo ID thuc" },
+    { "name": "Family Member 2", "zalo_id": "" }
   ],
   "schedule": {
     "morning_reminder": true,

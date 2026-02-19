@@ -1,6 +1,6 @@
 # Home Assistant MCP Extension
 
-Connects OpenClaw gateway to Home Assistant for the Ba Noi Care eldercare project.
+Connects OpenClaw gateway to Home Assistant for the eldercare monitoring project.
 
 ## Setup
 
@@ -27,7 +27,7 @@ Skills can use the `home_assistant` tool with these actions:
 | `fire_event` | `event_type`, `event_data` | Fire a HA event |
 | `check_connection` | — | Health check |
 
-## Key Entities (Ba Noi Care)
+## Key Entities (Eldercare)
 
 | Entity ID | Purpose |
 |-----------|---------|

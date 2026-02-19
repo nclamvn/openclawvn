@@ -223,7 +223,7 @@ Khi bà nói (qua micro → Whisper STT → text), match với bảng sau:
 | "tắt nhạc", "tắ nhạ", "dừng nhạc" | tắt+nhạc, dừng+nhạc | stop_music | Dừng media player |
 | "đọc truyện", "đọ truyện", "kể truyện" | truyện | read_story | Đọc truyện (xem mục B) |
 | "dừng", "ngừng", "thôi" | dừng, ngừng, thôi | stop_all | Dừng mọi media/TTS |
-| "gọi con Lan", "gọi Lan" | gọi + {tên} | call_family | Trigger skill eldercare-videocall |
+| "gọi {tên}", "gọi con" | gọi + {tên} | call_family | Trigger skill eldercare-videocall |
 | "mấy giờ rồi", "mấy giờ" | mấy giờ | tell_time | TTS: "Bây giờ là {X} giờ {Y} phút ạ" |
 | "tắt đèn", "tắ đè" | tắt + đèn | light_off | HA: light.turn_off grandma_room |
 | "bật đèn", "mở đèn", "mở đè" | bật/mở + đèn | light_on | HA: light.turn_on grandma_room brightness=150 |

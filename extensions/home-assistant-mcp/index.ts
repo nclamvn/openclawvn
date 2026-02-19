@@ -1,6 +1,6 @@
 /**
  * Home Assistant MCP Extension for OpenClaw
- * Ba Noi Care: Eldercare monitoring integration
+ * Eldercare: Eldercare monitoring integration
  *
  * Bridges OpenClaw gateway with Home Assistant REST API + WebSocket,
  * enabling eldercare skills to read sensors, control devices, and
@@ -212,7 +212,7 @@ const plugin = {
         "call_service (control device — light, media_player, tts, etc.), " +
         "get_history (sensor history), fire_event (trigger automation), " +
         "check_connection (health check). " +
-        "Key entities for Ba Noi Care: " +
+        "Key entities for Eldercare: " +
         "binary_sensor.grandma_room_presence, sensor.grandma_room_motion_minutes, " +
         "sensor.grandma_room_temperature, sensor.grandma_room_humidity, " +
         "light.grandma_room, media_player.grandma_room, sensor.sos_button_action.",

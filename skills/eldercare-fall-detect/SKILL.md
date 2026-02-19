@@ -6,7 +6,7 @@ description: |
   Layer 2: AI pattern — motion spike rồi bất động đột ngột (> 5 phút)
   Khi phát hiện → TTS hỏi bà xác nhận → chờ 30 giây → nếu bà không trả lời
   → trigger SOS Level 2.
-  Đối tượng: Bà nội 90 tuổi, nằm giường, Biên Hoà.
+  Đối tượng: Người cao tuổi cần chăm sóc, nằm giường.
 metadata:
   {
     "openclaw":

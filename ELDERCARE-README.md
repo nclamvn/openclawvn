@@ -76,9 +76,9 @@ Module gồm 3 lớp:
 
 ## Thông tin bà
 
-- **Tuổi:** 90+
+- **Tuổi:** Cao tuổi
 - **Tình trạng:** Nằm giường, tỉnh táo, nặng tai
-- **Địa điểm:** Biên Hoà
+- **Địa điểm:** (cấu hình theo gia đình)
 - **Không dùng thuốc** (không cần nhắc thuốc)
 - **Ông nội:** Người chăm phụ, biết dùng Zalo
 - **WiFi:** Ổn định

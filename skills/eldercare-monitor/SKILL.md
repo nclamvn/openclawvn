@@ -4,7 +4,7 @@ description: |
   Giám sát phòng bà nội 24/7. Chạy mỗi 5 phút. Đọc sensors từ Home Assistant
   (mmWave presence, camera motion, nhiệt độ, độ ẩm). Phân tích bất thường
   dựa trên context (giờ, thói quen). Gửi cảnh báo 4 mức qua Zalo.
-  Đối tượng: Bà nội 90 tuổi, Biên Hoà. Minh mẫn, nặng tai, nằm giường.
+  Đối tượng: Người cao tuổi cần chăm sóc. Minh mẫn, nặng tai, nằm giường.
 homepage: https://github.com/nclamvn/ba-noi-care
 metadata:
   {
@@ -128,8 +128,8 @@ Kiểm tra thêm điều kiện môi trường:
 
 ```json
 [
-  { "name": "Con gái Lan", "priority": 1 },
-  { "name": "Con trai Minh", "priority": 2 }
+  { "name": "Contact 1", "priority": 1 },
+  { "name": "Contact 2", "priority": 2 }
 ]
 ```
 

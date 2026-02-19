@@ -1,6 +1,6 @@
 /**
  * Home Assistant MCP Extension — Type Definitions
- * Ba Noi Care: Eldercare monitoring integration
+ * Eldercare: Eldercare monitoring integration
  */
 
 export interface HAConfig {
