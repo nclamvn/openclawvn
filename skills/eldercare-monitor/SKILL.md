@@ -78,9 +78,10 @@ Có thể adjust giờ nap nếu memory có `eldercare_nap_pattern`.
 - Hành động thêm: Dùng tool `camsnap` chụp camera snapshot, gửi ảnh kèm message
 
 **Mức KHẨN CẤP** — Trigger skill eldercare-sos:
-- Camera phát hiện ngã (nếu có integration)
-- HOẶC: `presence` = off VÀ nhiệt độ giảm bất thường (> 3°C/giờ so với giờ trước)
-- Hành động: Gọi skill `eldercare-sos` để bắt đầu SOS protocol
+- Camera phát hiện ngã (nếu có integration) → ưu tiên gọi skill `eldercare-fall-detect` trước (TTS xác nhận với bà). Nếu bà không phản hồi → fall-detect tự trigger SOS Level 2.
+- HOẶC: AI pattern nghi ngã — camera motion spike rồi bất động > 5 phút → gọi skill `eldercare-fall-detect`
+- HOẶC: `presence` = off VÀ nhiệt độ giảm bất thường (> 3°C/giờ so với giờ trước) → Gọi skill `eldercare-sos` trực tiếp
+- Hành động mặc định: Gọi skill `eldercare-sos` để bắt đầu SOS protocol
 
 ### Bước 4: Quy tắc chống false alarm
 
@@ -133,6 +134,53 @@ Kiểm tra thêm điều kiện môi trường:
 ```
 
 Nếu chưa có contacts trong memory, gửi cảnh báo vào channel hiện tại và nhắc: "Cần cấu hình contacts cho eldercare. Dùng eldercare-config để setup."
+
+## Config Override (đọc từ memory)
+
+Trước khi dùng thresholds mặc định từ `monitor-config.json`, **PHẢI** kiểm tra memory:
+
+1. Dùng memory search query `eldercare_monitor_config`
+2. Nếu tìm thấy → parse JSON, dùng các thresholds từ memory (gia đình đã tuỳ chỉnh qua UI)
+3. Nếu KHÔNG tìm thấy → dùng giá trị mặc định từ `monitor-config.json`
+
+Các field có thể override:
+- `thresholds.no_motion_attention_minutes` (mặc định: 30)
+- `thresholds.no_motion_warning_minutes` (mặc định: 60)
+- `thresholds.no_presence_warning_minutes` (mặc định: 120)
+- `thresholds.temp_low` / `temp_high` (mặc định: 20 / 35)
+- `thresholds.humidity_low` / `humidity_high` (mặc định: 40 / 80)
+- `cooldown_minutes` (mặc định: 15)
+
+## Offline Queue Integration
+
+Khi gửi cảnh báo thất bại (Zalo hoặc Telegram error):
+
+1. Lưu vào memory với key: `eldercare_queue_{timestamp}`
+2. Format:
+   ```json
+   {
+     "id": "queue_{timestamp}_{random}",
+     "created_at": "ISO timestamp",
+     "source_skill": "eldercare-monitor",
+     "priority": "ATTENTION | WARNING | EMERGENCY",
+     "channels": ["zalo"],
+     "message": "Nội dung cảnh báo gốc",
+     "target": "contact_1 | all",
+     "retry_count": 0,
+     "max_retries": 10,
+     "last_retry_at": null,
+     "status": "pending",
+     "metadata": {
+       "level": "attention | warning | emergency",
+       "motion_minutes": 45,
+       "presence": true
+     }
+   }
+   ```
+3. Skill eldercare-offline-queue sẽ retry theo backoff schedule
+4. ATTENTION/INFO: chỉ retry Zalo
+5. WARNING: retry Zalo, nếu fail thử Telegram
+6. EMERGENCY: retry không backoff 3 lần đầu + channel failover
 
 ### Tóm tắt flow
 

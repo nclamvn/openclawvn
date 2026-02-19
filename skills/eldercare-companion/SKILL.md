@@ -243,6 +243,23 @@ Khi bà nói (qua micro → Whisper STT → text), match với bảng sau:
 3. Timeout: 10 giây chờ bà nói — quá timeout → cancel, không hỏi lại
 4. KHÔNG hỏi lại quá 2 lần liên tiếp (gây khó chịu)
 
+## Config Override (đọc từ memory)
+
+Trước khi dùng giá trị mặc định, **PHẢI** kiểm tra memory:
+
+1. Dùng memory search query `eldercare_companion_config`
+2. Nếu tìm thấy → parse JSON, dùng config từ memory
+3. Nếu KHÔNG tìm thấy → dùng defaults từ companion-config.json
+
+Các field có thể override:
+- `tts.volume` (mặc định: 0.9)
+- `tts.rate` (mặc định: 0.8)
+- `reminders.enabled` (bật/tắt nhắc sinh hoạt)
+- `reminders.schedule` (custom schedule nếu gia đình muốn điều chỉnh)
+- `music.default_playlist` (playlist mặc định)
+- `voice_command.enabled` (bật/tắt voice command)
+- `voice_command.confirm_threshold` (ngưỡng confidence để fuzzy match)
+
 ### Lưu ý giọng yếu
 - Dùng Whisper large model nếu có (nhận diện tốt hơn giọng yếu)
 - STT confidence < 0.5 → hỏi lại thay vì đoán

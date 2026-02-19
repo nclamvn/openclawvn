@@ -196,6 +196,23 @@ Khi người KHÔNG trong whitelist nhắn "gọi bà":
 - `schedule.morning_reminder` — Bật/tắt nhắc sáng
 - `schedule.quiet_hours_start/end` — Giờ yên lặng
 
+## Config Override (đọc từ memory)
+
+Trước khi dùng giá trị mặc định, **PHẢI** kiểm tra memory:
+
+1. Dùng memory search query `eldercare_videocall_config`
+2. Nếu tìm thấy → parse JSON, dùng config từ memory
+3. Nếu KHÔNG tìm thấy → dùng defaults từ videocall-config.json
+
+Các field có thể override:
+- `tablet.ip` — IP tablet
+- `tablet.fully_kiosk_password`
+- `grandma_zalo_contact` — Zalo bà
+- `whitelist` — người được phép gọi
+- `schedule.morning_reminder` — bật/tắt nhắc sáng
+- `schedule.quiet_hours_start` / `quiet_hours_end`
+- `tts.volume` (mặc định: 1.0)
+
 ## Phụ đề (Phase 2 — ghi nhận)
 
 Phụ đề realtime chưa khả thi qua Zalo video call (Zalo không có API overlay).

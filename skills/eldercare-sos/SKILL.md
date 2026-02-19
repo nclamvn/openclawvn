@@ -39,6 +39,10 @@ Bà hoặc ông bấm nút Zigbee. Kiểm tra entity `sensor.sos_button_action`:
 
 Khi skill eldercare-monitor phân loại mức KHẨN CẤP → trigger SOS bắt đầu từ **Level 2** (vì AI đã xác nhận nghiêm trọng).
 
+### 2b. Fall Detection (từ eldercare-fall-detect)
+
+Khi skill eldercare-fall-detect phát hiện ngã VÀ bà không phản hồi TTS xác nhận (2 lần, tổng 45 giây) → trigger SOS bắt đầu từ **Level 2**. Source = `"fall_detect"`. Kèm theo 2 ảnh camera snapshot (trước và sau TTS).
+
 ### 3. Manual (gia đình gõ chat)
 
 Khi ai đó gõ "SOS", "cứu", "khẩn cấp" trong Zalo hoặc Telegram → trigger từ **Level 1**.
@@ -223,3 +227,51 @@ Giữ 3 giây (long):
 
 Nếu chưa có contacts, gửi message cảnh báo vào channel hiện tại:
 "⚠️ SOS triggered nhưng chưa có contacts! Cần config eldercare_contacts trong memory."
+
+## Config Override (đọc từ memory)
+
+Trước khi dùng giá trị mặc định, **PHẢI** kiểm tra memory:
+
+1. Dùng memory search query `eldercare_sos_config`
+2. Nếu tìm thấy → parse JSON, dùng config từ memory
+3. Nếu KHÔNG tìm thấy → dùng defaults trong SKILL.md này
+
+Các field có thể override:
+- `escalation.level1_wait_seconds` (mặc định: 180)
+- `escalation.level2_wait_seconds` (mặc định: 180)
+- `tts.message` (custom message TTS cho bà)
+- `tts.volume` (mặc định: 1.0)
+
+## Offline Queue Integration
+
+Khi gửi alert thất bại (Zalo hoặc Telegram error):
+
+1. Lưu message vào memory với key: `eldercare_queue_{timestamp}`
+2. Format:
+   ```json
+   {
+     "id": "queue_{timestamp}_{random}",
+     "created_at": "ISO timestamp",
+     "source_skill": "eldercare-sos",
+     "priority": "EMERGENCY",
+     "channels": ["zalo", "telegram"],
+     "message": "Nội dung SOS alert gốc",
+     "target": "all",
+     "retry_count": 0,
+     "max_retries": 10,
+     "last_retry_at": null,
+     "status": "pending",
+     "metadata": {
+       "sos_level": 1,
+       "source": "button_single | ai_detect | manual"
+     }
+   }
+   ```
+3. Skill eldercare-offline-queue sẽ retry mỗi phút
+4. EMERGENCY messages retry không backoff 3 lần đầu
+5. Nếu Zalo fail → tự động thử Telegram
+6. Nếu mất mạng > 30 phút → TTS local + đèn flash qua HA LAN
+
+**QUAN TRỌNG:** Mỗi level escalation (Level 1, 2, 3) nếu gửi thất bại
+đều tạo queue entry riêng. Ví dụ Level 1 fail → queue entry priority EMERGENCY.
+Level 2 fail → thêm 1 queue entry nữa.

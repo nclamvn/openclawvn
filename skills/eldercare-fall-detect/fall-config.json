@@ -1,0 +1,30 @@
+{
+  "detection": {
+    "layer1_entity": "binary_sensor.grandma_room_fall_detected",
+    "stillness_threshold_minutes": 5,
+    "spike_window_seconds": 30,
+    "exclude_sleep_hours": true,
+    "exclude_nap_hours": true
+  },
+  "confirm": {
+    "tts_wait_seconds": 30,
+    "second_tts_wait_seconds": 15,
+    "tts_volume": 1.0,
+    "tts_language": "vi"
+  },
+  "cooldown": {
+    "between_checks_minutes": 10
+  },
+  "entities": {
+    "fall_detected": "binary_sensor.grandma_room_fall_detected",
+    "presence": "binary_sensor.grandma_room_presence",
+    "motion_minutes": "sensor.grandma_room_motion_minutes",
+    "camera_motion": "binary_sensor.grandma_room_camera_motion",
+    "camera": "camera.grandma_room",
+    "media_player": "media_player.grandma_room"
+  },
+  "escalation": {
+    "sos_level": 2,
+    "source_name": "fall_detect"
+  }
+}
