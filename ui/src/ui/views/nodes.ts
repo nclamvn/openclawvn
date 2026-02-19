@@ -13,6 +13,8 @@ import type {
   PairedDevice,
   PendingDevice,
 } from "../controllers/devices";
+import { renderDeviceStatusBadge, resolveDeviceStatus } from "../components/device-status-badge";
+import { renderAuditTimeline, type AuditEntry } from "../components/audit-timeline";
 
 export type NodesProps = {
   loading: boolean;
@@ -39,6 +41,11 @@ export type NodesProps = {
   onDeviceReject: (requestId: string) => void;
   onDeviceRotate: (deviceId: string, role: string, scopes?: string[]) => void;
   onDeviceRevoke: (deviceId: string, role: string) => void;
+  deviceAuditEntries: Record<string, AuditEntry[]>;
+  deviceAuditLoading: Record<string, boolean>;
+  deviceAuditHasMore: Record<string, boolean>;
+  onDeviceAuditLoad: (deviceId: string) => void;
+  onDeviceAuditLoadMore: (deviceId: string) => void;
   onLoadConfig: () => void;
   onLoadExecApprovals: () => void;
   onBindDefault: (nodeId: string | null) => void;
@@ -165,10 +172,17 @@ function renderPairedDevice(device: PairedDevice, props: NodesProps) {
   const roles = `roles: ${formatList(device.roles)}`;
   const scopes = `scopes: ${formatList(device.scopes)}`;
   const tokens = Array.isArray(device.tokens) ? device.tokens : [];
+  const deviceStatus = resolveDeviceStatus(device);
+  const auditEntries = props.deviceAuditEntries?.[device.deviceId] ?? [];
+  const auditLoading = props.deviceAuditLoading?.[device.deviceId] ?? false;
+  const auditHasMore = props.deviceAuditHasMore?.[device.deviceId] ?? false;
   return html`
     <div class="list-item">
       <div class="list-main">
-        <div class="list-title">${name}</div>
+        <div class="row" style="justify-content: space-between; align-items: center;">
+          <div class="list-title">${name}</div>
+          ${renderDeviceStatusBadge(deviceStatus)}
+        </div>
         <div class="list-sub">${device.deviceId}${ip}</div>
         <div class="muted" style="margin-top: 6px;">${roles} · ${scopes}</div>
         ${
@@ -183,18 +197,62 @@ function renderPairedDevice(device: PairedDevice, props: NodesProps) {
               </div>
             `
         }
+        ${
+          auditEntries.length > 0 || auditLoading
+            ? html`
+              <div style="margin-top: 12px;">
+                ${renderAuditTimeline({
+                  deviceId: device.deviceId,
+                  entries: auditEntries,
+                  loading: auditLoading,
+                  hasMore: auditHasMore,
+                  onLoadMore: () => props.onDeviceAuditLoadMore(device.deviceId),
+                })}
+              </div>
+            `
+            : html`
+              <button
+                class="btn btn--sm"
+                style="margin-top: 10px;"
+                @click=${() => props.onDeviceAuditLoad(device.deviceId)}
+              >
+                ${t().devices.activity}
+              </button>
+            `
+        }
       </div>
     </div>
   `;
 }
 
+function resolveTokenStatus(token: DeviceTokenSummary): { label: string; cls: string } {
+  if (token.revokedAtMs) {
+    return { label: t().nodes.deviceDetails.revoked, cls: "status-badge status-badge--danger" };
+  }
+  if (token.expiresAtMs && token.expiresAtMs < Date.now()) {
+    return { label: t().nodes.deviceDetails.expired, cls: "status-badge status-badge--warn" };
+  }
+  return { label: t().nodes.deviceDetails.active, cls: "status-badge status-badge--ok" };
+}
+
 function renderTokenRow(deviceId: string, token: DeviceTokenSummary, props: NodesProps) {
-  const status = token.revokedAtMs ? t().nodes.deviceDetails.revoked : t().nodes.deviceDetails.active;
+  const status = resolveTokenStatus(token);
   const scopes = `scopes: ${formatList(token.scopes)}`;
   const when = formatAgo(token.rotatedAtMs ?? token.createdAtMs ?? token.lastUsedAtMs ?? null);
+  const expiry =
+    token.expiresAtMs && !token.revokedAtMs
+      ? token.expiresAtMs > Date.now()
+        ? `${t().nodes.deviceDetails.expiresIn} ${formatAgo(token.expiresAtMs)}`
+        : t().nodes.deviceDetails.expired
+      : null;
   return html`
     <div class="row" style="justify-content: space-between; gap: 8px;">
-      <div class="list-sub">${token.role} · ${status} · ${scopes} · ${when}</div>
+      <div>
+        <div class="list-sub">
+          ${token.role} · <span class="${status.cls}">${status.label}</span> · ${scopes} · ${when}
+        </div>
+        ${expiry ? html`<div class="list-sub muted" style="margin-top: 2px;">${expiry}</div>` : nothing}
+      </div>
       <div class="row" style="justify-content: flex-end; gap: 6px; flex-wrap: wrap;">
         <button
           class="btn btn--sm"

@@ -1,5 +1,13 @@
 @import "./styles/base.css";
+@import "./styles/animations.css";
+@import "./styles/utilities.css";
+@import "./styles/states.css";
+@import "./styles/connection.css";
 @import "./styles/layout.css";
 @import "./styles/layout.mobile.css";
 @import "./styles/components.css";
 @import "./styles/config.css";
+@import "./styles/projects.css";
+@import "./styles/deploy.css";
+@import "./styles/preview.css";
+@import "./styles/eldercare.css";

@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
 import { OpenClawApp } from "./app";
+import { t } from "./i18n";
 
 const originalConnect = OpenClawApp.prototype.connect;
 
@@ -36,12 +37,16 @@ describe("chat focus mode", () => {
     expect(shell).not.toBeNull();
     expect(shell?.classList.contains("shell--chat-focus")).toBe(false);
 
-    const toggle = app.querySelector<HTMLButtonElement>('button[title^="Toggle focus mode"]');
-    expect(toggle).not.toBeNull();
-    toggle?.click();
+    // Enable focus mode programmatically (no entry button in current UI)
+    app.applySettings({ ...app.settings, chatFocusMode: true });
 
     await app.updateComplete;
     expect(shell?.classList.contains("shell--chat-focus")).toBe(true);
+
+    // The exit button should now be visible
+    const exitBtn = app.querySelector<HTMLButtonElement>(".chat-focus-exit");
+    expect(exitBtn).not.toBeNull();
+    expect(exitBtn?.getAttribute("title")).toBe(t().chat.toggleFocus);
 
     const link = app.querySelector<HTMLAnchorElement>('a.nav-item[href="/channels"]');
     expect(link).not.toBeNull();

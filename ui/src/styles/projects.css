@@ -1,0 +1,114 @@
+/* ===========================================
+   Projects View — Cards, Grid, Health Indicators
+   =========================================== */
+
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4, 16px);
+}
+
+/* ─── Project Card ─────────────────────────── */
+
+.project-card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4, 16px);
+  transition:
+    border-color var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+  box-shadow: var(--shadow-sm);
+}
+
+.project-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.project-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.project-card__title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-strong);
+}
+
+.project-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.project-card__row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.project-card__env-warning {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warn);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.project-card__env-warning svg {
+  width: 14px;
+  height: 14px;
+}
+
+.project-card__env-ok {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--ok);
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.project-card__env-ok svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ─── Health Dot ───────────────────────────── */
+
+.health-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.health-dot--ok {
+  background: var(--ok);
+  box-shadow: 0 0 6px var(--ok-subtle);
+}
+
+.health-dot--warn {
+  background: var(--warn);
+  box-shadow: 0 0 6px var(--warn-subtle);
+}
+
+.health-dot--error {
+  background: var(--destructive);
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.2);
+}
+
+.health-dot--unknown {
+  background: var(--muted);
+}

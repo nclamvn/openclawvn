@@ -17,28 +17,31 @@ export class ResizableDivider extends LitElement {
 
   static styles = css`
     :host {
-      width: 4px;
+      width: 1px;
       cursor: col-resize;
-      background: var(--border, #333);
+      background: var(--border-subtle, rgba(255,255,255,0.1));
       transition: background 150ms ease-out;
       flex-shrink: 0;
       position: relative;
     }
-    
+
+    /* Larger hit area for easier dragging */
     :host::before {
       content: "";
       position: absolute;
       top: 0;
-      left: -4px;
-      right: -4px;
+      left: -6px;
+      right: -6px;
       bottom: 0;
     }
-    
+
     :host(:hover) {
+      width: 2px;
       background: var(--accent, #007bff);
     }
-    
+
     :host(.dragging) {
+      width: 2px;
       background: var(--accent, #007bff);
     }
   `;

@@ -10,6 +10,7 @@ export type DeviceTokenSummary = {
   rotatedAtMs?: number;
   revokedAtMs?: number;
   lastUsedAtMs?: number;
+  expiresAtMs?: number | null;
 };
 
 export type PendingDevice = {
@@ -106,7 +107,12 @@ export async function rotateDeviceToken(
           scopes: res.scopes ?? params.scopes ?? [],
         });
       }
-      window.prompt(t().devices.newTokenPrompt, res.token);
+      try {
+        await navigator.clipboard.writeText(res.token);
+        window.alert(t().devices.tokenCopied);
+      } catch {
+        window.prompt(t().devices.newTokenPrompt, res.token);
+      }
     }
     await loadDevices(state);
   } catch (err) {

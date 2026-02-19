@@ -4,8 +4,8 @@ import {
   GATEWAY_CLIENT_NAMES,
   type GatewayClientMode,
   type GatewayClientName,
-} from "../../../src/gateway/protocol/client-info.js";
-import { buildDeviceAuthPayload } from "../../../src/gateway/device-auth.js";
+} from "../lib/client-info.js";
+import { buildDeviceAuthPayload } from "../lib/device-auth.js";
 import { loadOrCreateDeviceIdentity, signDevicePayload } from "./device-identity";
 import { clearDeviceAuthToken, loadDeviceAuthToken, storeDeviceAuthToken } from "./device-auth";
 
@@ -37,6 +37,10 @@ export type GatewayHelloOk = {
     issuedAtMs?: number;
   };
   policy?: { tickIntervalMs?: number };
+  insecureMode?: {
+    allowInsecureAuth?: boolean;
+    disableDeviceAuth?: boolean;
+  };
 };
 
 type Pending = {

@@ -17,19 +17,30 @@ export const vi = {
     config: "Cấu hình",
     debug: "Gỡ lỗi",
     logs: "Nhật ký",
-    // Update
-    update: "CẬP NHẬT",
-    checkUpdate: "Kiểm tra cập nhật",
-    newVersion: "Phiên bản mới",
-    currentVersion: "Phiên bản hiện tại",
-    latestVersion: "Phiên bản mới nhất",
-    upToDate: "Đã cập nhật mới nhất",
-    updateAvailable: "Có bản cập nhật mới",
+    memory: "Trí nhớ",
+    docs: "Tài liệu",
+    projects: "Dự án",
+    deploy: "Triển khai",
+    preview: "Xem trước",
+    eldercare: "Bà nội care",
+    eldercareConfig: "Cài đặt eldercare",
 
-    // Groups
+    // Groups - Minimal 2-group structure
+    core: "Chính",
+    admin: "Quản trị",
+    deployGroup: "Triển khai",
+    eldercare: "Bà nội care",
+
+    // Legacy groups (keep for compatibility)
+    conversations: "HỘI THOẠI",
+    connections: "KẾT NỐI",
+    activity: "HOẠT ĐỘNG",
+    settings: "CÀI ĐẶT",
+    resources: "TÀI NGUYÊN",
+
+    // Legacy groups (keep for compatibility)
     control: "ĐIỀU KHIỂN",
     agent: "TÁC TỬ",
-    settings: "CÀI ĐẶT",
 
     // Subtitles
     subtitles: {
@@ -44,6 +55,12 @@ export const vi = {
       config: "Chỉnh sửa ~/.openclaw/openclaw.json an toàn.",
       debug: "Ảnh chụp gateway, sự kiện và gọi RPC thủ công.",
       logs: "Theo dõi trực tiếp nhật ký tệp gateway.",
+      memory: "Duyệt và quản lý sự kiện người dùng trích xuất từ hội thoại.",
+      projects: "Quản lý dự án, quét môi trường và kiểm tra sức khỏe.",
+      deploy: "Triển khai dự án lên production hoặc staging.",
+      preview: "Tạo và quản lý bản triển khai xem trước với URL chia sẻ.",
+      eldercare: "Giám sát sức khỏe bà, cảnh báo, cuộc gọi và hoạt động hàng ngày.",
+      eldercareConfig: "Cấu hình ngưỡng giám sát, danh bạ SOS, nhạc và video call.",
     },
   },
 
@@ -128,7 +145,7 @@ export const vi = {
   sidebar: {
     expand: "Mở rộng thanh bên",
     collapse: "Thu gọn thanh bên",
-    checkUpdate: "Kiểm tra cập nhật từ OpenClaw gốc",
+    docs: "Tài liệu (mở tab mới)",
   },
 
   // ============================================
@@ -154,6 +171,7 @@ export const vi = {
 
     // Quick actions
     quickActions: {
+      build: "Build app",
       code: "Viết mã",
       write: "Soạn văn",
       create: "Tạo mới",
@@ -161,16 +179,29 @@ export const vi = {
       analyze: "Phân tích",
     },
 
+    // Vibecode Kit
+    vibecode: {
+      quickStart: "Chọn loại dự án",
+      landing: "Landing Page",
+      saas: "Ứng dụng SaaS",
+      dashboard: "Dashboard",
+      blog: "Blog",
+      portfolio: "Portfolio",
+      steps: { vision: "VISION", context: "CONTEXT", blueprint: "BLUEPRINT", contract: "CONTRACT", build: "BUILD", refine: "REFINE" },
+      viewBlueprint: "Xem Blueprint",
+      buildingWith: "Đang build với Vibecode",
+    },
+
     // Model selector
     selectModel: "Chọn mô hình",
     apiKey: "Khóa API",
     enterApiKey: "Nhập khóa API...",
-    saveTemp: "Lưu tạm (frontend)",
-    savePerm: "Lưu cố định (backend)",
-    tempLabel: "TẠM",
-    permLabel: "CỐ ĐỊNH",
-    saveToAuthProfiles: "Lưu vào auth-profiles (cố định)",
-    saveSessionOnly: "Chỉ lưu trong phiên làm việc này",
+    apiKeyNeeded: "Nhập khóa API để bắt đầu trò chuyện",
+    apiKeySaved: "Đã lưu khóa API!",
+    configureApiKey: "Cài đặt khóa API",
+    saveToGateway: "Lưu vào gateway (auth-profiles)",
+    apiKeySaveError: "Lưu thất bại — xem console",
+    apiKeySaving: "Đang lưu...",
 
     // Providers
     providers: {
@@ -183,11 +214,19 @@ export const vi = {
     attachmentPreview: "Xem trước tệp đính kèm",
     removeAttachment: "Xóa tệp đính kèm",
     attachImage: "Đính kèm ảnh",
+    attachFile: "Đính kèm tệp",
+    fileTooLarge: "Tệp vượt quá giới hạn 5 MB",
+    unsupportedFileType: "Loại tệp không được hỗ trợ",
 
     // Voice
     stopRecording: "Dừng ghi âm",
     voiceInput: "Nhập giọng nói",
     microphoneError: "Không thể truy cập microphone",
+    voiceError: "Lỗi nhận dạng giọng nói",
+    voiceListening: "Đang nghe...",
+    voiceSpeaking: "Đang nói...",
+    ttsOn: "Bật đọc phản hồi",
+    ttsOff: "Tắt đọc phản hồi",
 
     // Send button
     stop: "Dừng",
@@ -236,6 +275,8 @@ export const vi = {
       onGatewayHost: "trên máy chủ gateway.",
       httpFallback: "Nếu bắt buộc dùng HTTP, đặt",
       tokenOnly: "(chỉ token).",
+      insecureBanner: "Chế độ không an toàn — các kiểm tra bảo mật đã được nới lỏng.",
+      insecureDetail: "Gateway này có các ghi đè bảo mật nguy hiểm được bật. Kiểm tra lại cấu hình.",
     },
 
     // Snapshot
@@ -337,6 +378,26 @@ export const vi = {
 
     empty: "Không tìm thấy phiên nào.",
     store: "Kho lưu trữ:",
+
+    viewTable: "Bảng",
+    viewCards: "Thẻ",
+
+    card: {
+      resume: "Tiếp tục",
+      rename: "Đổi tên",
+      delete: "Xoá",
+      messages: "tin nhắn",
+      noMessages: "Chưa có tin nhắn",
+      untitled: "Phiên chưa đặt tên",
+    },
+
+    switcher: {
+      newSession: "Phiên mới",
+      viewAll: "Xem tất cả phiên",
+      recentSessions: "Phiên gần đây",
+      noSessions: "Không có phiên gần đây",
+      current: "đang mở",
+    },
   },
 
   // ============================================
@@ -436,6 +497,48 @@ export const vi = {
 
     apiKey: "Khóa API",
     saveKey: "Lưu khóa",
+
+    catalog: {
+      title: "Kỹ năng",
+      hint: "Quản lý plugin, kênh, công cụ và dịch vụ.",
+      search: "Tìm kỹ năng...",
+      empty: "Không tìm thấy kỹ năng nào.",
+      filters: {
+        all: "Tất cả",
+        installed: "Đã cài",
+        channel: "Kênh",
+        tool: "Công cụ",
+        service: "Dịch vụ",
+        memory: "Bộ nhớ",
+        provider: "Xác thực",
+        skill: "Kỹ năng",
+      },
+      status: {
+        active: "Hoạt động",
+        disabled: "Đã tắt",
+        needsConfig: "Cần cấu hình",
+        error: "Lỗi",
+        notInstalled: "Chưa cài",
+      },
+      actions: {
+        install: "Cài đặt",
+        settings: "Cài đặt",
+        enable: "Bật",
+        disable: "Tắt",
+      },
+      settings: {
+        title: "Cài đặt: {name}",
+        type: "Loại",
+        source: "Nguồn",
+        config: "Cấu hình",
+        noConfig: "Không có cấu hình.",
+        envVars: "Biến môi trường",
+        addEnvVar: "Thêm biến",
+        save: "Lưu",
+        cancel: "Hủy",
+        saving: "Đang lưu...",
+      },
+    },
   },
 
   // ============================================
@@ -470,6 +573,8 @@ export const vi = {
       tokens: "Token",
       active: "hoạt động",
       revoked: "đã thu hồi",
+      expired: "hết hạn",
+      expiresIn: "hết hạn",
       rotate: "Xoay vòng",
       revoke: "Thu hồi",
     },
@@ -755,7 +860,47 @@ export const vi = {
   devices: {
     confirmReject: "Từ chối yêu cầu ghép nối thiết bị này?",
     newTokenPrompt: "Token thiết bị mới (sao chép và lưu trữ an toàn):",
+    tokenCopied: "Đã sao chép token vào clipboard. Lưu trữ an toàn.",
     confirmRevoke: "Thu hồi token cho",
+    status: {
+      active: "Hoạt động",
+      expiring: "Sắp hết hạn",
+      expired: "Hết hạn",
+      revoked: "Đã thu hồi",
+      pending: "Chờ duyệt",
+    },
+    tokenExpiry: "Token hết hạn:",
+    tokenExpired: "Token đã hết hạn",
+    tokenNeverExpires: "Token không hết hạn",
+    lastIp: "IP gần nhất:",
+    renewToken: "Gia hạn",
+    copyToken: "Copy Token",
+    tokenWarning: "Token chỉ hiển thị 1 lần. Lưu lại ngay.",
+    activity: "Hoạt động gần đây",
+    viewMore: "Xem thêm...",
+    noActivity: "Chưa có hoạt động nào",
+    insecureBanner: "CHẾ ĐỘ KHÔNG AN TOÀN",
+    insecureDetail: "Xác thực thiết bị đang bị tắt. Không dùng cho production.",
+    viewDetails: "Xem chi tiết",
+    events: {
+      auth_success: "Kết nối thành công",
+      auth_failure: "Đăng nhập thất bại",
+      "auth_rate-limited": "Bị khoá tạm thời",
+      device_paired: "Ghép nối thành công",
+      device_rejected: "Từ chối ghép nối",
+      token_rotate: "Xoay token",
+      token_revoke: "Thu hồi token",
+      token_renew: "Gia hạn token",
+      token_expired: "Token hết hạn",
+      cors_rejected: "Origin bị từ chối",
+      ip_mismatch: "IP thay đổi",
+      ip_rejected: "IP bị từ chối",
+      scope_violation: "Không đủ quyền",
+      insecure_mode: "Chế độ không an toàn",
+      session_created: "Tạo phiên mới",
+      session_deleted: "Xoá phiên",
+      session_reset: "Reset phiên",
+    },
   },
 
   controllers: {
@@ -956,6 +1101,38 @@ export const vi = {
   },
 
   // ============================================
+  // MEMORY
+  // ============================================
+  memory: {
+    title: "Trí nhớ",
+    search: "Tìm kiếm trí nhớ...",
+    extractButton: "Trích xuất",
+    extracting: "Đang trích xuất...",
+    extracted: "Đã trích xuất!",
+    empty: "Chưa có trí nhớ nào.",
+    privacy: "Trí nhớ được lưu cục bộ và không bao giờ chia sẻ.",
+    deleteConfirm: "Xóa trí nhớ này?",
+    save: "Lưu",
+    cancel: "Hủy",
+    verified: "Đã xác minh",
+    unverified: "Chưa xác minh",
+    // Indicator (chat header)
+    indicatorActive: "trí nhớ đang hoạt động",
+    indicatorOff: "Trí nhớ tắt",
+    indicatorToggle: "Bật/tắt trí nhớ",
+    indicatorNone: "Không có trí nhớ",
+    categories: {
+      all: "Tất cả",
+      identity: "Danh tính",
+      preference: "Sở thích",
+      project: "Dự án",
+      relationship: "Mối quan hệ",
+      skill: "Kỹ năng",
+      fact: "Sự kiện",
+    },
+  },
+
+  // ============================================
   // NOSTR PROFILE FORM
   // ============================================
   nostrProfile: {
@@ -994,6 +1171,230 @@ export const vi = {
     showAdvanced: "Hiện nâng cao",
     hideAdvanced: "Ẩn nâng cao",
     unsavedChanges: "Bạn có thay đổi chưa lưu",
+  },
+
+  // ============================================
+  // AGENT TABS
+  // ============================================
+  agentTabs: {
+    newTab: "Tab mới",
+    closeTab: "Đóng tab",
+    closeConfirm: "Đóng tab này? Phiên sẽ được lưu trữ.",
+    rename: "Đổi tên",
+    presets: {
+      title: "Chọn loại tác tử",
+      code: "Lập trình",
+      writer: "Soạn văn",
+      research: "Nghiên cứu",
+      translator: "Phiên dịch",
+      custom: "Tùy chỉnh",
+    },
+    unread: "chưa đọc",
+    pin: "Ghim tab",
+    unpin: "Bỏ ghim tab",
+    splitView: "Chia đôi màn hình",
+    focusLeft: "Chọn khung trái",
+    focusRight: "Chọn khung phải",
+  },
+
+  // ============================================
+  // PROJECTS
+  // ============================================
+  projects: {
+    title: "Dự án",
+    description: "Dự án đã đăng ký và sức khỏe môi trường.",
+    empty: "Không tìm thấy dự án nào.",
+    scan: "Quét",
+    scanning: "Đang quét...",
+    scanned: "Đã quét!",
+    rescan: "Quét lại",
+    addProject: "Thêm dự án",
+    health: {
+      healthy: "Khỏe mạnh",
+      warning: "Cảnh báo",
+      error: "Lỗi",
+      unknown: "Không rõ",
+    },
+    env: {
+      title: "Môi trường",
+      valid: "Hợp lệ",
+      missing: "Thiếu biến",
+      check: "Kiểm tra env",
+    },
+    card: {
+      lastDeploy: "Triển khai cuối",
+      platform: "Nền tảng",
+      branch: "Nhánh",
+      never: "Chưa bao giờ",
+    },
+  },
+
+  // ============================================
+  // DEPLOY
+  // ============================================
+  deploy: {
+    title: "Triển khai",
+    description: "Triển khai dự án lên production hoặc staging.",
+    empty: "Chưa có triển khai nào.",
+    start: "Triển khai",
+    deploying: "Đang triển khai...",
+    cancel: "Hủy",
+    platform: "Nền tảng",
+    target: "Mục tiêu",
+    branch: "Nhánh",
+    selectProject: "Chọn dự án",
+    selectPlatform: "Chọn nền tảng",
+    platforms: {
+      fly: "Fly.io",
+      railway: "Railway",
+      vercel: "Vercel",
+      docker: "Docker",
+      custom: "Tùy chỉnh",
+    },
+    targets: {
+      production: "Production",
+      staging: "Staging",
+      preview: "Preview",
+    },
+    status: {
+      pending: "Đang chờ",
+      building: "Đang build",
+      deploying: "Đang triển khai",
+      success: "Thành công",
+      failed: "Thất bại",
+      cancelled: "Đã hủy",
+    },
+    log: {
+      title: "Nhật ký triển khai",
+      empty: "Chưa có đầu ra.",
+      copy: "Sao chép log",
+      download: "Tải log",
+    },
+    history: {
+      title: "Lịch sử",
+      empty: "Không có lịch sử triển khai.",
+      viewLog: "Xem log",
+    },
+    confirm: {
+      title: "Xác nhận triển khai",
+      message: "Triển khai {project} lên {target}?",
+      proceed: "Triển khai ngay",
+    },
+  },
+
+  // ============================================
+  // PREVIEW
+  // ============================================
+  preview: {
+    title: "Xem trước",
+    description: "Bản triển khai xem trước với URL chia sẻ.",
+    empty: "Không có bản triển khai xem trước.",
+    create: "Tạo Preview",
+    creating: "Đang tạo...",
+    delete: "Xóa",
+    deleting: "Đang xóa...",
+    promote: "Nâng lên production",
+    promoting: "Đang nâng cấp...",
+    open: "Mở xem trước",
+    copyUrl: "Sao chép URL",
+    urlCopied: "Đã sao chép URL!",
+    iframe: {
+      title: "Xem trước",
+      loading: "Đang tải xem trước...",
+      openExternal: "Mở trong tab mới",
+    },
+    card: {
+      branch: "Nhánh",
+      created: "Tạo lúc",
+      expires: "Hết hạn",
+      url: "URL",
+    },
+    form: {
+      project: "Dự án",
+      branch: "Nhánh",
+      branchPlaceholder: "feature/nhánh-tôi",
+    },
+  },
+
+  // ============================================
+  // ELDERCARE — BÀ NỘI CARE
+  // ============================================
+  eldercare: {
+    // Dashboard
+    grandmaStatus: "Tình trạng bà",
+    roomEnvironment: "Môi trường phòng",
+    familyCalls: "Cuộc gọi gia đình",
+    companionActivity: "Hoạt động giải trí",
+    presence: "Hiện diện",
+    inRoom: "Có trong phòng",
+    noMotion: "Không có chuyển động",
+    currentLevel: "Mức hiện tại",
+    checksToday: "Lượt kiểm tra hôm nay",
+    alertsToday: "Cảnh báo hôm nay",
+    temperature: "Nhiệt độ",
+    humidity: "Độ ẩm",
+    motion: "Chuyển động",
+    tempOutOfRange: "⚠️ Nhiệt độ ngoài ngưỡng thoải mái (20-35°C)",
+    humidityOutOfRange: "⚠️ Độ ẩm ngoài ngưỡng thoải mái (40-80%)",
+    musicSessions: "Lần nghe nhạc",
+    reminders: "Nhắc sinh hoạt",
+    storyActive: "Đang nghe truyện",
+    yes: "Có",
+    no: "Không",
+    noCalls: "Chưa ai gọi bà hôm nay",
+    sosActive: "SOS ĐANG HOẠT ĐỘNG — Cần xử lý ngay!",
+    sosActiveShort: "Đang xử lý",
+    resolved: "Đã xử lý",
+    sosEventsToday: "Sự kiện SOS hôm nay",
+    lastReport: "Báo cáo gần nhất",
+    haOffline: "HA offline",
+    refreshing: "Đang tải...",
+    levels: {
+      normal: "Bình thường",
+      attention: "Chú ý",
+      warning: "Cảnh báo",
+      emergency: "Khẩn cấp",
+    } as Record<string, string>,
+    // Config sections
+    configSections: {
+      monitor: "Giám sát",
+      sos: "SOS",
+      companion: "Bạn đồng hành",
+      videocall: "Video call",
+    } as Record<string, string>,
+    config: {
+      monitorThresholds: "Ngưỡng giám sát",
+      noMotionAttention: "Không chuyển động → Chú ý (phút)",
+      noMotionWarning: "Không chuyển động → Cảnh báo (phút)",
+      noMotionEmergency: "Không chuyển động → Khẩn cấp (phút)",
+      minutesHint: "Số phút không có chuyển động trước khi cảnh báo",
+      temperatureThresholds: "Ngưỡng nhiệt độ",
+      tempLow: "Nhiệt độ thấp (°C)",
+      tempHigh: "Nhiệt độ cao (°C)",
+      haEntities: "Entity IDs (Home Assistant)",
+      sosContacts: "Danh bạ SOS",
+      noContacts: "Chưa có liên hệ SOS",
+      contactsHint: "Chỉnh sửa trong memory key eldercare_contacts",
+      escalationLevels: "Mức escalation",
+      level1Desc: "Gửi Zalo group gia đình",
+      level2Desc: "Gửi Telegram + Zalo",
+      level3Desc: "Gọi tất cả + thông báo liên tục",
+      minutes: "phút",
+      musicSettings: "Cài đặt nhạc",
+      defaultPlaylist: "Playlist mặc định",
+      volume: "Âm lượng (0-1)",
+      ttsSettings: "Cài đặt giọng đọc (TTS)",
+      ttsRate: "Tốc độ đọc",
+      ttsRateHint: "0.8 = chậm hơn bình thường (tốt cho bà)",
+      ttsVoice: "Giọng TTS",
+      tabletSettings: "Cài đặt tablet",
+      tabletIp: "IP tablet",
+      fullyKioskPassword: "Mật khẩu Fully Kiosk",
+      scheduleSettings: "Lịch gọi",
+      morningReminder: "Giờ nhắc sáng",
+      quietHoursStart: "Giờ yên tĩnh bắt đầu",
+      quietHoursEnd: "Giờ yên tĩnh kết thúc",
+    },
   },
 } as const;
 

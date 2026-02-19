@@ -17,7 +17,6 @@ import {
   startDebugPolling,
   stopDebugPolling,
 } from "./app-polling";
-import { checkForUpdates } from "./app-update";
 
 type LifecycleHost = {
   basePath: string;
@@ -32,10 +31,18 @@ type LifecycleHost = {
   logsEntries: unknown[];
   popStateHandler: () => void;
   topbarObserver: ResizeObserver | null;
-  // Update check state
-  updateAvailable: boolean;
-  latestVersion: string | null;
-  currentVersion: string;
+  // Command palette
+  commandPaletteOpen: boolean;
+  commandPaletteQuery: string;
+  commandPaletteSelectedIndex: number;
+  keyboardHandler?: (e: KeyboardEvent) => void;
+  setTab: (tab: Tab) => void;
+};
+
+// Tab shortcuts mapping (⌘1 = Core first tab, ⌘2 = Admin first tab)
+const TAB_SHORTCUTS: Record<string, Tab> = {
+  "1": "chat",
+  "2": "config",
 };
 
 export function handleConnected(host: LifecycleHost) {
@@ -53,12 +60,27 @@ export function handleConnected(host: LifecycleHost) {
   if (host.tab === "debug") {
     startDebugPolling(host as unknown as Parameters<typeof startDebugPolling>[0]);
   }
-  // Check for updates from upstream
-  checkForUpdates().then((result) => {
-    host.updateAvailable = result.available;
-    host.latestVersion = result.latestVersion;
-    host.currentVersion = result.currentVersion;
-  });
+
+  // Keyboard shortcuts handler
+  host.keyboardHandler = (e: KeyboardEvent) => {
+    // ⌘K or Ctrl+K for command palette
+    if ((e.metaKey || e.ctrlKey) && e.key === "k") {
+      e.preventDefault();
+      host.commandPaletteOpen = !host.commandPaletteOpen;
+      host.commandPaletteQuery = "";
+      host.commandPaletteSelectedIndex = 0;
+    }
+    // Escape to close command palette
+    if (e.key === "Escape" && host.commandPaletteOpen) {
+      host.commandPaletteOpen = false;
+    }
+    // ⌘1-2 for navigation (only when command palette is closed)
+    if (!host.commandPaletteOpen && (e.metaKey || e.ctrlKey) && TAB_SHORTCUTS[e.key]) {
+      e.preventDefault();
+      host.setTab(TAB_SHORTCUTS[e.key]);
+    }
+  };
+  window.addEventListener("keydown", host.keyboardHandler);
 }
 
 export function handleFirstUpdated(host: LifecycleHost) {
@@ -67,6 +89,9 @@ export function handleFirstUpdated(host: LifecycleHost) {
 
 export function handleDisconnected(host: LifecycleHost) {
   window.removeEventListener("popstate", host.popStateHandler);
+  if (host.keyboardHandler) {
+    window.removeEventListener("keydown", host.keyboardHandler);
+  }
   stopNodesPolling(host as unknown as Parameters<typeof stopNodesPolling>[0]);
   stopLogsPolling(host as unknown as Parameters<typeof stopLogsPolling>[0]);
   stopDebugPolling(host as unknown as Parameters<typeof stopDebugPolling>[0]);

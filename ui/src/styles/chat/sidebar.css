@@ -1,4 +1,4 @@
-/* Split View Layout */
+/* Split View Layout (Claude-style) */
 .chat-split-container {
   display: flex;
   gap: 0;
@@ -14,17 +14,67 @@
   overflow: hidden;
   /* Smooth transition when sidebar opens/closes */
   transition: flex 250ms ease-out;
+  /* In normal mode, constrain width and center */
+  max-width: 68%;
+  margin: 0 auto;
 }
 
+/* When split panel is open, content within left panel (Claude-style) */
+.chat-split-container--open .chat-main {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch; /* Thread takes full width for scrollbar positioning */
+  justify-content: flex-start;
+  padding: 0;
+  overflow: hidden;
+}
+
+/* Thread in split mode - full width, scrollbar at edge */
+.chat-split-container--open .chat-main .chat-thread {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow-x: hidden;
+}
+
+/* Message groups centered within thread at 68% width */
+.chat-split-container--open .chat-main .chat-thread .chat-group {
+  width: 68%;
+  max-width: 68%;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
+
+/* Composer in split mode - aligned with chat-group (same 68% width) */
+.chat-split-container--open .chat-main .chat-composer.claude-style {
+  width: 68% !important;
+  max-width: 68% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+/* Queue aligned same as composer */
+.chat-split-container--open .chat-main .chat-queue {
+  width: 68% !important;
+  max-width: 68% !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  box-sizing: border-box;
+}
 .chat-sidebar {
-  flex: 1;
-  min-width: 300px;
+  flex: 1 1 45%; /* Take 45% of space - closer to Claude style */
+  min-width: 350px;
+  max-width: 55%;
   border-left: none;
   display: flex;
   flex-direction: column;
   overflow: hidden;
   animation: slide-in 200ms ease-out;
   position: relative;
+  background: var(--bg);
 }
 
 /* Thin hairline divider - Anthropic style */

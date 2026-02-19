@@ -13,11 +13,15 @@ import type {
   HealthSnapshot,
   LogEntry,
   LogLevel,
+  MemoryCategory,
   NostrProfile,
   PresenceEntry,
   SessionsListResult,
+  SkillCatalogEntry,
+  SkillCatalogKind,
   SkillStatusReport,
   StatusSummary,
+  UserFact,
 } from "./types";
 import type { ChatAttachment, ChatQueueItem, CronFormState } from "./ui-types";
 import type { EventLogEntry } from "./app-events";
@@ -26,15 +30,13 @@ import type { ExecApprovalsFile, ExecApprovalsSnapshot } from "./controllers/exe
 import type { DevicePairingList } from "./controllers/devices";
 import type { ExecApprovalRequest } from "./controllers/exec-approval";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form";
+import type { AgentTab } from "./controllers/agent-tabs";
+import type { ProjectInfo, DeployRecord, PreviewRecord, DeployStatus, DeployPlatform } from "./controllers/deploys";
 
 export type AppViewState = {
   settings: UiSettings;
   password: string;
   tab: Tab;
-  // Update check state
-  updateAvailable: boolean;
-  latestVersion: string | null;
-  currentVersion: string;
   onboarding: boolean;
   basePath: string;
   connected: boolean;
@@ -58,14 +60,36 @@ export type AppViewState = {
   chatAvatarUrl: string | null;
   chatThinkingLevel: string | null;
   chatQueue: ChatQueueItem[];
+  // Command palette state
+  commandPaletteOpen: boolean;
+  commandPaletteQuery: string;
+  commandPaletteSelectedIndex: number;
+  // Session switcher state
+  sessionSwitcherOpen: boolean;
+  // Agent tabs state
+  agentTabs: AgentTab[];
+  agentPresetPickerOpen: boolean;
+  // Split view state
+  focusedPane: "left" | "right";
   // Model selector state
   chatModelSelectorOpen: boolean;
   chatCurrentModel: string;
   chatSelectedProvider: string;
   chatApiKeys: Record<string, string>;
-  chatApiKeySaveMode: 'temp' | 'permanent';
-  // Voice recording state
+  chatApiKeyInputOpen: boolean;
+  chatApiKeySaveStatus: 'idle' | 'saving' | 'saved' | 'error';
+  // Voice state
   chatIsRecording: boolean;
+  voiceInterimTranscript: string;
+  voiceSupported: boolean;
+  voiceMode: "idle" | "listening" | "speaking";
+  ttsEnabled: boolean;
+  ttsSupported: boolean;
+  // Sidebar state for split panel
+  sidebarOpen: boolean;
+  sidebarContent: string | null;
+  sidebarError: string | null;
+  splitRatio: number;
   nodesLoading: boolean;
   nodes: Array<Record<string, unknown>>;
   devicesLoading: boolean;
@@ -138,6 +162,65 @@ export type AppViewState = {
   skillEdits: Record<string, string>;
   skillMessages: Record<string, SkillMessage>;
   skillsBusyKey: string | null;
+  // Catalog state
+  skillsCatalog: SkillCatalogEntry[];
+  skillsCatalogLoading: boolean;
+  skillsCatalogError: string | null;
+  skillsFilterKind: SkillCatalogKind | "all" | "installed";
+  skillsSearch: string;
+  // Settings panel state
+  skillsSettingsOpen: boolean;
+  skillsSettingsSkillId: string | null;
+  skillsSettingsSchema: Record<string, unknown> | null;
+  skillsSettingsUiHints: Record<string, unknown> | null;
+  skillsSettingsCurrentConfig: Record<string, unknown> | null;
+  skillsSettingsLoading: boolean;
+  skillsSettingsSaving: boolean;
+  skillsSettingsFormValues: Record<string, unknown>;
+  skillsSettingsEnvVars: Array<{ key: string; value: string }>;
+  memoryLoading: boolean;
+  memoryFacts: UserFact[];
+  memoryError: string | null;
+  memoryFilter: MemoryCategory | "all";
+  memorySearch: string;
+  memoryEditingId: string | null;
+  memoryEditDraft: string;
+  memoryExtracting: boolean;
+  memoryExtractStatus: "idle" | "extracting" | "extracted";
+  // Memory indicator (chat header)
+  memoryIndicatorEnabled: boolean;
+  memoryIndicatorFacts: UserFact[];
+  memoryIndicatorTotal: number;
+  memoryIndicatorExpanded: boolean;
+  // Projects state
+  projectsLoading: boolean;
+  projectsList: ProjectInfo[];
+  projectsError: string | null;
+  projectsScanning: boolean;
+  projectsScanStatus: "idle" | "scanning" | "scanned";
+  // Deploy state
+  deployLoading: boolean;
+  deployHistory: DeployRecord[];
+  deployError: string | null;
+  deployActiveId: string | null;
+  deployStatus: DeployStatus | null;
+  deployLogLines: string[];
+  deploySelectedProject: string | null;
+  deploySelectedPlatform: DeployPlatform | null;
+  deploySelectedTarget: "production" | "staging" | "preview";
+  deploySelectedBranch: string;
+  deployRunning: boolean;
+  // Preview state
+  previewLoading: boolean;
+  previewList: PreviewRecord[];
+  previewError: string | null;
+  previewCreating: boolean;
+  previewDeleting: string | null;
+  previewPromoting: string | null;
+  previewSelectedProject: string | null;
+  previewBranch: string;
+  previewIframeUrl: string | null;
+  handleLoadMemory: () => Promise<void>;
   debugLoading: boolean;
   debugStatus: StatusSummary | null;
   debugHealth: HealthSnapshot | null;
@@ -215,4 +298,17 @@ export type AppViewState = {
   handleLogsLevelFilterToggle: (level: LogLevel) => void;
   handleLogsAutoFollowToggle: (next: boolean) => void;
   handleCallDebugMethod: (method: string, params: string) => Promise<void>;
+  // Sidebar handlers
+  handleOpenSidebar: (content: string) => void;
+  handleCloseSidebar: () => void;
+  handleSplitRatioChange: (ratio: number) => void;
+  // Deploy handlers
+  handleLoadProjects: () => Promise<void>;
+  handleScanProject: (projectId: string) => Promise<void>;
+  handleDeploy: () => Promise<void>;
+  handleLoadDeployHistory: () => Promise<void>;
+  handleLoadPreviews: () => Promise<void>;
+  handleCreatePreview: () => Promise<void>;
+  handleDeletePreview: (previewId: string) => Promise<void>;
+  handlePromotePreview: (previewId: string) => Promise<void>;
 };

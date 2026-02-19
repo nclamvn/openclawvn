@@ -1,27 +1,56 @@
 import type { IconName } from "./icons.js";
 import { t } from "./i18n";
 
-// Tab groups with translation keys
-// Simplified navigation - removed: instances, cron, skills, nodes, debug, logs
+// Tab groups with translation keys - Minimal 2-group structure
 export const TAB_GROUPS = [
-  { label: "chat", labelKey: "chat", tabs: ["chat"] },
   {
-    label: "control",
-    labelKey: "control",
-    tabs: ["overview", "channels", "sessions"],
+    label: "core",
+    labelKey: "core",
+    tabs: ["chat", "overview", "channels", "memory"],
+    icon: "messageSquare",
+    shortcut: "1"
   },
-  { label: "settings", labelKey: "settings", tabs: ["config"] },
+  {
+    label: "admin",
+    labelKey: "admin",
+    tabs: ["config", "skills", "nodes", "debug", "logs"],
+    icon: "settings",
+    shortcut: "2"
+  },
+  {
+    label: "deploy",
+    labelKey: "deployGroup",
+    tabs: ["projects", "deploy", "preview"],
+    icon: "rocket",
+    shortcut: "3"
+  },
+  {
+    label: "eldercare",
+    labelKey: "eldercare",
+    tabs: ["eldercare", "eldercare-config"],
+    icon: "activity",
+    shortcut: "4"
+  },
 ] as const;
 
 export function getTabGroupLabel(group: (typeof TAB_GROUPS)[number]): string {
   const translations = t();
   switch (group.labelKey) {
-    case "chat":
-      return translations.nav.chat.toUpperCase();
-    case "control":
-      return translations.nav.control;
-    case "agent":
-      return translations.nav.agent;
+    case "core":
+      return (translations.nav as Record<string, string>).core ?? "Core";
+    case "admin":
+      return (translations.nav as Record<string, string>).admin ?? "Admin";
+    case "deployGroup":
+      return (translations.nav as Record<string, string>).deployGroup ?? "Deploy";
+    case "eldercare":
+      return (translations.nav as Record<string, string>).eldercare ?? "Eldercare";
+    // Legacy fallbacks
+    case "conversations":
+      return translations.nav.conversations ?? "CONVERSATIONS";
+    case "connections":
+      return translations.nav.connections ?? "CONNECTIONS";
+    case "activity":
+      return translations.nav.activity ?? "ACTIVITY";
     case "settings":
       return translations.nav.settings;
     default:
@@ -29,9 +58,11 @@ export function getTabGroupLabel(group: (typeof TAB_GROUPS)[number]): string {
   }
 }
 
-// All tabs (including hidden ones for internal routing)
+export function getTabGroupShortcut(group: (typeof TAB_GROUPS)[number]): string {
+  return (group as { shortcut?: string }).shortcut ?? "";
+}
+
 export type Tab =
-  | "chat"
   | "overview"
   | "channels"
   | "instances"
@@ -39,22 +70,35 @@ export type Tab =
   | "cron"
   | "skills"
   | "nodes"
+  | "chat"
+  | "memory"
   | "config"
   | "debug"
-  | "logs";
+  | "logs"
+  | "projects"
+  | "deploy"
+  | "preview"
+  | "eldercare"
+  | "eldercare-config";
 
 const TAB_PATHS: Record<Tab, string> = {
-  chat: "/chat",
   overview: "/overview",
   channels: "/channels",
   instances: "/instances",
   sessions: "/sessions",
   cron: "/cron",
   skills: "/skills",
+  memory: "/memory",
   nodes: "/nodes",
+  chat: "/chat",
   config: "/config",
   debug: "/debug",
   logs: "/logs",
+  projects: "/projects",
+  deploy: "/deploy",
+  preview: "/preview",
+  eldercare: "/eldercare",
+  "eldercare-config": "/eldercare-config",
 };
 
 const PATH_TO_TAB = new Map(Object.entries(TAB_PATHS).map(([tab, path]) => [path, tab as Tab]));
@@ -132,6 +176,8 @@ export function iconForTab(tab: Tab): IconName {
       return "fileText";
     case "cron":
       return "loader";
+    case "memory":
+      return "brain";
     case "skills":
       return "zap";
     case "nodes":
@@ -142,6 +188,16 @@ export function iconForTab(tab: Tab): IconName {
       return "bug";
     case "logs":
       return "scrollText";
+    case "projects":
+      return "folder";
+    case "deploy":
+      return "rocket";
+    case "preview":
+      return "globe";
+    case "eldercare":
+      return "activity";
+    case "eldercare-config":
+      return "settings";
     default:
       return "folder";
   }
@@ -150,8 +206,6 @@ export function iconForTab(tab: Tab): IconName {
 export function titleForTab(tab: Tab) {
   const translations = t();
   switch (tab) {
-    case "chat":
-      return translations.nav.chat;
     case "overview":
       return translations.nav.overview;
     case "channels":
@@ -162,16 +216,30 @@ export function titleForTab(tab: Tab) {
       return translations.nav.sessions;
     case "cron":
       return translations.nav.cronJobs;
+    case "memory":
+      return translations.nav.memory;
     case "skills":
       return translations.nav.skills;
     case "nodes":
       return translations.nav.nodes;
+    case "chat":
+      return translations.nav.chat;
     case "config":
       return translations.nav.config;
     case "debug":
       return translations.nav.debug;
     case "logs":
       return translations.nav.logs;
+    case "projects":
+      return translations.nav.projects;
+    case "deploy":
+      return translations.nav.deploy;
+    case "preview":
+      return translations.nav.preview;
+    case "eldercare":
+      return (translations.nav as Record<string, string>).eldercare ?? "Eldercare";
+    case "eldercare-config":
+      return (translations.nav as Record<string, string>).eldercareConfig ?? "Eldercare Config";
     default:
       return translations.nav.control;
   }
@@ -180,8 +248,6 @@ export function titleForTab(tab: Tab) {
 export function subtitleForTab(tab: Tab) {
   const subtitles = t().nav.subtitles;
   switch (tab) {
-    case "chat":
-      return subtitles.chat;
     case "overview":
       return subtitles.overview;
     case "channels":
@@ -192,16 +258,30 @@ export function subtitleForTab(tab: Tab) {
       return subtitles.sessions;
     case "cron":
       return subtitles.cron;
+    case "memory":
+      return subtitles.memory;
     case "skills":
       return subtitles.skills;
     case "nodes":
       return subtitles.nodes;
+    case "chat":
+      return subtitles.chat;
     case "config":
       return subtitles.config;
     case "debug":
       return subtitles.debug;
     case "logs":
       return subtitles.logs;
+    case "projects":
+      return subtitles.projects;
+    case "deploy":
+      return subtitles.deploy;
+    case "preview":
+      return subtitles.preview;
+    case "eldercare":
+      return (subtitles as Record<string, string>).eldercare ?? "";
+    case "eldercare-config":
+      return (subtitles as Record<string, string>).eldercareConfig ?? "";
     default:
       return "";
   }

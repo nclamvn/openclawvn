@@ -110,7 +110,23 @@ export function renderOverview(props: OverviewProps) {
     `;
   })();
 
+  const insecureMode = props.hello?.insecureMode;
+  const showInsecureBanner =
+    props.connected &&
+    insecureMode &&
+    (insecureMode.allowInsecureAuth || insecureMode.disableDeviceAuth);
+
   return html`
+    ${
+      showInsecureBanner
+        ? html`
+          <div class="callout danger" style="margin-bottom: 16px;">
+            <strong>${t().overview.gatewayAccess.insecureBanner}</strong>
+            <div class="muted" style="margin-top: 4px;">${t().overview.gatewayAccess.insecureDetail}</div>
+          </div>
+        `
+        : ""
+    }
     <section class="grid grid-cols-2">
       <div class="card">
         <div class="card-title">${t().overview.gatewayAccess.title}</div>

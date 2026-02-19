@@ -1,4 +1,5 @@
 import { abortChatRun, loadChatHistory, sendChatMessage } from "./controllers/chat";
+import { loadMemoryIndicator } from "./controllers/memory";
 import { loadSessions } from "./controllers/sessions";
 import { generateUUID } from "./uuid";
 import { resetToolStream } from "./app-tool-stream";
@@ -6,7 +7,7 @@ import { scheduleChatScroll } from "./app-scroll";
 import { setLastActiveSessionKey } from "./app-settings";
 import { normalizeBasePath } from "./navigation";
 import type { GatewayHelloOk } from "./gateway";
-import { parseAgentSessionKey } from "../../../src/sessions/session-key-utils.js";
+import { parseAgentSessionKey } from "../lib/session-key.js";
 import type { OpenClawApp } from "./app";
 import type { ChatAttachment, ChatQueueItem } from "./ui-types";
 
@@ -185,6 +186,7 @@ export async function handleSendChat(
 export async function refreshChat(host: ChatHost) {
   await Promise.all([
     loadChatHistory(host as unknown as OpenClawApp),
+    loadMemoryIndicator(host as unknown as OpenClawApp),
     loadSessions(host as unknown as OpenClawApp, {
       activeMinutes: CHAT_SESSIONS_ACTIVE_MINUTES,
     }),

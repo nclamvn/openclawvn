@@ -2,6 +2,7 @@ import { render } from "lit";
 import { describe, expect, it, vi } from "vitest";
 
 import { DEFAULT_CRON_FORM } from "../app-defaults";
+import { t } from "../i18n";
 import type { CronJob } from "../types";
 import { renderCron, type CronProps } from "./cron";
 
@@ -47,7 +48,7 @@ describe("cron view", () => {
     const container = document.createElement("div");
     render(renderCron(createProps()), container);
 
-    expect(container.textContent).toContain("Select a job to inspect run history.");
+    expect(container.textContent).toContain(t().cron.runHistory.selectJob);
   });
 
   it("loads run history when clicking a job row", () => {
@@ -90,7 +91,7 @@ describe("cron view", () => {
     expect(selected).not.toBeNull();
 
     const runsButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Runs",
+      (btn) => btn.textContent?.trim() === t().cron.jobs.runs,
     );
     expect(runsButton).not.toBeUndefined();
     runsButton?.dispatchEvent(new MouseEvent("click", { bubbles: true }));

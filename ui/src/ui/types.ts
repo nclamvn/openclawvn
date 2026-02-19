@@ -363,6 +363,8 @@ export type GatewaySessionRow = {
   model?: string;
   modelProvider?: string;
   contextTokens?: number;
+  deviceId?: string;
+  deviceDisplayName?: string;
 };
 
 export type SessionsListResult = {
@@ -510,6 +512,25 @@ export type SkillStatusReport = {
   skills: SkillStatusEntry[];
 };
 
+export type SkillCatalogKind = "memory" | "skill" | "tool" | "channel" | "service" | "provider";
+
+export type SkillCatalogStatus = "active" | "disabled" | "needsConfig" | "error" | "notInstalled";
+
+export type SkillCatalogEntry = {
+  id: string;
+  name: string;
+  kind: SkillCatalogKind | null;
+  description: string;
+  version: string | null;
+  installed: boolean;
+  enabled: boolean;
+  hasConfig: boolean;
+  source: "bundled" | "workspace" | "global" | "config";
+  status: SkillCatalogStatus;
+  channels?: string[];
+  providers?: string[];
+};
+
 export type StatusSummary = Record<string, unknown>;
 
 export type HealthSnapshot = Record<string, unknown>;
@@ -523,4 +544,17 @@ export type LogEntry = {
   subsystem?: string | null;
   message?: string | null;
   meta?: Record<string, unknown> | null;
+};
+
+export type MemoryCategory = "identity" | "preference" | "project" | "relationship" | "skill" | "fact";
+
+export type UserFact = {
+  id: string;
+  category: MemoryCategory;
+  content: string;
+  confidence: number;
+  source: { sessionId: string; extractedAt: string };
+  verified: boolean;
+  createdAt: string;
+  updatedAt: string;
 };

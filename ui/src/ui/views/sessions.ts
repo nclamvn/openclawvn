@@ -5,6 +5,8 @@ import { formatSessionTokens } from "../presenter";
 import { pathForTab } from "../navigation";
 import type { GatewaySessionRow, SessionsListResult } from "../types";
 import { t } from "../i18n";
+import { icons } from "../icons";
+import { renderSessionCard } from "../components/session-card";
 
 export type SessionsProps = {
   loading: boolean;
@@ -15,6 +17,8 @@ export type SessionsProps = {
   includeGlobal: boolean;
   includeUnknown: boolean;
   basePath: string;
+  viewMode: "table" | "cards";
+  currentSessionKey: string;
   onFiltersChange: (next: {
     activeMinutes: string;
     limit: string;
@@ -22,6 +26,8 @@ export type SessionsProps = {
     includeUnknown: boolean;
   }) => void;
   onRefresh: () => void;
+  onViewModeChange: (mode: "table" | "cards") => void;
+  onResume: (key: string) => void;
   onPatch: (
     key: string,
     patch: {
@@ -75,6 +81,7 @@ function resolveThinkLevelPatchValue(value: string, isBinary: boolean): string |
 
 export function renderSessions(props: SessionsProps) {
   const rows = props.result?.sessions ?? [];
+  const isCards = props.viewMode === "cards";
   return html`
     <section class="card">
       <div class="row" style="justify-content: space-between;">
@@ -82,9 +89,29 @@ export function renderSessions(props: SessionsProps) {
           <div class="card-title">${t().sessions.title}</div>
           <div class="card-sub">${t().sessions.description}</div>
         </div>
-        <button class="btn" ?disabled=${props.loading} @click=${props.onRefresh}>
-          ${props.loading ? t().common.loading : t().common.refresh}
-        </button>
+        <div class="row" style="gap: 8px;">
+          <div class="sessions-view-toggle">
+            <button
+              class="sessions-view-toggle__btn ${!isCards ? "sessions-view-toggle__btn--active" : ""}"
+              type="button"
+              title=${t().sessions.viewTable}
+              @click=${() => props.onViewModeChange("table")}
+            >
+              ${icons.layoutList}
+            </button>
+            <button
+              class="sessions-view-toggle__btn ${isCards ? "sessions-view-toggle__btn--active" : ""}"
+              type="button"
+              title=${t().sessions.viewCards}
+              @click=${() => props.onViewModeChange("cards")}
+            >
+              ${icons.layoutGrid}
+            </button>
+          </div>
+          <button class="btn" ?disabled=${props.loading} @click=${props.onRefresh}>
+            ${props.loading ? t().common.loading : t().common.refresh}
+          </button>
+        </div>
       </div>
 
       <div class="filters" style="margin-top: 14px;">
@@ -154,29 +181,53 @@ export function renderSessions(props: SessionsProps) {
         ${props.result ? `${t().sessions.store} ${props.result.path}` : ""}
       </div>
 
-      <div class="table" style="margin-top: 16px;">
-        <div class="table-head">
-          <div>${t().sessions.table.key}</div>
-          <div>${t().sessions.table.label}</div>
-          <div>${t().sessions.table.kind}</div>
-          <div>${t().sessions.table.updated}</div>
-          <div>${t().sessions.table.tokens}</div>
-          <div>${t().sessions.table.thinking}</div>
-          <div>${t().sessions.table.verbose}</div>
-          <div>${t().sessions.table.reasoning}</div>
-          <div>${t().common.actions}</div>
-        </div>
-        ${
-          rows.length === 0
-            ? html`
-                <div class="muted">${t().sessions.empty}</div>
-              `
-            : rows.map((row) =>
-                renderRow(row, props.basePath, props.onPatch, props.onDelete, props.loading),
-              )
-        }
-      </div>
+      ${isCards ? renderCardsView(rows, props) : renderTableView(rows, props)}
     </section>
+  `;
+}
+
+function renderCardsView(rows: GatewaySessionRow[], props: SessionsProps) {
+  if (rows.length === 0) {
+    return html`<div class="muted" style="margin-top: 16px;">${t().sessions.empty}</div>`;
+  }
+  return html`
+    <div class="session-cards-grid" style="margin-top: 16px;">
+      ${rows.map((row) =>
+        renderSessionCard({
+          session: row,
+          currentSessionKey: props.currentSessionKey,
+          basePath: props.basePath,
+          onResume: props.onResume,
+          onRename: (key, label) => props.onPatch(key, { label }),
+          onDelete: props.onDelete,
+        }),
+      )}
+    </div>
+  `;
+}
+
+function renderTableView(rows: GatewaySessionRow[], props: SessionsProps) {
+  return html`
+    <div class="table" style="margin-top: 16px;">
+      <div class="table-head">
+        <div>${t().sessions.table.key}</div>
+        <div>${t().sessions.table.label}</div>
+        <div>${t().sessions.table.kind}</div>
+        <div>${t().sessions.table.updated}</div>
+        <div>${t().sessions.table.tokens}</div>
+        <div>${t().sessions.table.thinking}</div>
+        <div>${t().sessions.table.verbose}</div>
+        <div>${t().sessions.table.reasoning}</div>
+        <div>${t().common.actions}</div>
+      </div>
+      ${
+        rows.length === 0
+          ? html`<div class="muted">${t().sessions.empty}</div>`
+          : rows.map((row) =>
+              renderRow(row, props.basePath, props.onPatch, props.onDelete, props.loading),
+            )
+      }
+    </div>
   `;
 }
 

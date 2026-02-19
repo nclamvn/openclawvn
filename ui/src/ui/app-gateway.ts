@@ -1,9 +1,11 @@
 import { loadChatHistory } from "./controllers/chat";
+import { loadMemoryIndicator } from "./controllers/memory";
 import { loadDevices } from "./controllers/devices";
 import { loadNodes } from "./controllers/nodes";
 import { loadAgents } from "./controllers/agents";
 import type { GatewayEventFrame, GatewayHelloOk } from "./gateway";
 import { GatewayBrowserClient } from "./gateway";
+import { connectionManager } from "./connection/connection-manager";
 import type { EventLogEntry } from "./app-events";
 import type { AgentsListResult, PresenceEntry, HealthSnapshot, StatusSummary } from "./types";
 import type { Tab } from "./navigation";
@@ -12,6 +14,8 @@ import { handleAgentEvent, resetToolStream, type AgentEventPayload } from "./app
 import { CHAT_SESSIONS_ACTIVE_MINUTES, flushChatQueueForEvent } from "./app-chat";
 import { applySettings, loadCron, refreshActiveTab, setLastActiveSessionKey } from "./app-settings";
 import { handleChatEvent, type ChatEventPayload } from "./controllers/chat";
+import { speakText } from "./controllers/voice";
+import { extractText } from "./chat/message-extract";
 import {
   addExecApproval,
   parseExecApprovalRequested,
@@ -22,6 +26,7 @@ import type { OpenClawApp } from "./app";
 import type { ExecApprovalRequest } from "./controllers/exec-approval";
 import { loadAssistantIdentity } from "./controllers/assistant-identity";
 import { loadSessions } from "./controllers/sessions";
+import { incrementUnread } from "./controllers/agent-tabs";
 
 type GatewayHost = {
   settings: UiSettings;
@@ -111,6 +116,9 @@ export function connectGateway(host: GatewayHost) {
   host.execApprovalQueue = [];
   host.execApprovalError = null;
 
+  // Notify connection manager we're actively connecting (visual feedback)
+  connectionManager.onConnecting();
+
   host.client?.stop();
   const client = new GatewayBrowserClient({
     url: host.settings.gatewayUrl,
@@ -124,6 +132,8 @@ export function connectGateway(host: GatewayHost) {
       host.connected = true;
       host.lastError = null;
       host.hello = hello;
+      // Notify connection manager
+      connectionManager.onConnected();
       applySnapshot(host, hello);
       // Reset orphaned chat run state from before disconnect.
       // Any in-flight run's final event was lost during the disconnect window.
@@ -144,6 +154,8 @@ export function connectGateway(host: GatewayHost) {
       // Code 1012 = Service Restart (expected during config saves, don't show as error)
       if (code !== 1012) {
         host.lastError = `disconnected (${code}): ${reason || "no reason"}`;
+        // Notify connection manager
+        connectionManager.onDisconnected(code, reason);
       }
     },
     onEvent: (evt) => {
@@ -193,6 +205,13 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
         payload.sessionKey,
       );
     }
+    // Track unread for non-active agent tabs
+    if (payload?.sessionKey && payload.sessionKey !== host.sessionKey && payload.state === "final") {
+      const app = host as unknown as OpenClawApp;
+      if (app.agentTabs?.some((tab) => tab.sessionKey === payload.sessionKey)) {
+        app.agentTabs = incrementUnread(app.agentTabs, payload.sessionKey);
+      }
+    }
     const state = handleChatEvent(host as unknown as OpenClawApp, payload);
     if (state === "final" || state === "error" || state === "aborted") {
       resetToolStream(host as unknown as Parameters<typeof resetToolStream>[0]);
@@ -207,7 +226,19 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
         }
       }
     }
-    if (state === "final") void loadChatHistory(host as unknown as OpenClawApp);
+    if (state === "final") {
+      void loadChatHistory(host as unknown as OpenClawApp);
+      void loadMemoryIndicator(host as unknown as OpenClawApp);
+      // TTS: speak the final response if enabled
+      if ((host as unknown as OpenClawApp).ttsEnabled && payload?.message) {
+        const text = extractText(payload.message);
+        if (text) {
+          speakText(text, (mode) => {
+            (host as unknown as OpenClawApp).voiceMode = mode;
+          });
+        }
+      }
+    }
     return;
   }
 
@@ -238,6 +269,32 @@ function handleGatewayEventUnsafe(host: GatewayHost, evt: GatewayEventFrame) {
       window.setTimeout(() => {
         host.execApprovalQueue = removeExecApproval(host.execApprovalQueue, entry.id);
       }, delay);
+    }
+    return;
+  }
+
+  if (evt.event === "copilot.deploy.log") {
+    const payload = evt.payload as { line?: string; deploymentId?: string } | undefined;
+    const app = host as unknown as OpenClawApp;
+    if (payload?.line && app.deployActiveId === payload.deploymentId) {
+      app.deployLogLines = [...app.deployLogLines, payload.line];
+    }
+    return;
+  }
+
+  if (evt.event === "copilot.deploy.complete") {
+    const payload = evt.payload as
+      | { success: boolean; url?: string; error?: string }
+      | undefined;
+    const app = host as unknown as OpenClawApp;
+    app.deployRunning = false;
+    if (payload?.success) {
+      app.deployStatus = "success";
+    } else {
+      app.deployStatus = "failed";
+      if (payload?.error) {
+        app.deployError = payload.error;
+      }
     }
     return;
   }

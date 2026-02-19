@@ -1,0 +1,495 @@
+/* ===========================================
+   Eldercare — Dashboard & Config Views
+   =========================================== */
+
+/* ─── Dashboard Layout ───────────────────── */
+
+.ec-dashboard {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+}
+
+.ec-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.ec-error {
+  color: var(--danger);
+  font-size: 13px;
+}
+
+.ec-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4, 16px);
+}
+
+/* ─── Card ────────────────────────────────── */
+
+.ec-card {
+  border: 1px solid var(--border);
+  background: var(--card);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4, 16px);
+  transition:
+    border-color var(--duration-normal) var(--ease-out),
+    box-shadow var(--duration-normal) var(--ease-out);
+  box-shadow: var(--shadow-sm);
+}
+
+.ec-card:hover {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-md);
+}
+
+.ec-card--danger {
+  border-color: var(--danger);
+  box-shadow: 0 0 12px var(--danger-subtle);
+}
+
+.ec-card__header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.ec-card__icon {
+  font-size: 18px;
+  line-height: 1;
+}
+
+.ec-card__title {
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--text-strong);
+  flex: 1;
+}
+
+.ec-card__body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* ─── Stat rows ──────────────────────────── */
+
+.ec-stat-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+  padding: 4px 0;
+}
+
+.ec-stat-row + .ec-stat-row {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.ec-stat-label {
+  color: var(--muted);
+}
+
+.ec-stat-value {
+  color: var(--text-strong);
+  font-weight: 500;
+}
+
+/* ─── Level badges ───────────────────────── */
+
+.ec-level-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+
+.ec-level--normal {
+  background: var(--ok-subtle);
+  color: var(--ok);
+}
+
+.ec-level--attention {
+  background: var(--warn-subtle);
+  color: var(--warn);
+}
+
+.ec-level--warning {
+  background: rgba(229, 72, 77, 0.1);
+  color: var(--danger);
+}
+
+.ec-level--emergency {
+  background: var(--danger);
+  color: #fff;
+  animation: ec-pulse 1.5s infinite;
+}
+
+@keyframes ec-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ─── Sensor grid ────────────────────────── */
+
+.ec-sensor-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  text-align: center;
+}
+
+.ec-sensor__value {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text-strong);
+  font-family: var(--font-display);
+  letter-spacing: -0.02em;
+}
+
+.ec-sensor__label {
+  font-size: 11px;
+  color: var(--muted);
+  margin-top: 2px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ec-env-warn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--warn);
+  font-size: 12px;
+  margin-top: 4px;
+  padding: 6px 8px;
+  background: var(--warn-subtle);
+  border-radius: 6px;
+}
+
+/* ─── Calls list ─────────────────────────── */
+
+.ec-calls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.ec-call-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 6px 0;
+  font-size: 13px;
+}
+
+.ec-call-item + .ec-call-item {
+  border-top: 1px solid var(--border-subtle);
+}
+
+.ec-call-caller {
+  color: var(--text-strong);
+  font-weight: 500;
+}
+
+.ec-call-time {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+/* ─── Empty state ────────────────────────── */
+
+.ec-empty-state {
+  text-align: center;
+  padding: 16px 8px;
+}
+
+.ec-empty-state__text {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+/* ─── SOS Banner ─────────────────────────── */
+
+.ec-sos-banner {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: var(--danger);
+  border-radius: var(--radius-lg);
+  color: #fff;
+  font-weight: 600;
+  animation: ec-pulse 1.5s infinite;
+}
+
+.ec-sos-banner__icon {
+  font-size: 24px;
+}
+
+.ec-sos-banner__text {
+  font-size: 15px;
+}
+
+/* ─── SOS events list ────────────────────── */
+
+.ec-sos-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ec-sos-item {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  font-size: 13px;
+}
+
+.ec-sos-item--active {
+  border-color: var(--danger);
+  background: var(--danger-subtle);
+}
+
+.ec-sos-item__time {
+  color: var(--muted);
+  font-size: 12px;
+  font-family: var(--font-mono, monospace);
+}
+
+.ec-sos-item__source {
+  color: var(--text-strong);
+  font-weight: 500;
+}
+
+.ec-sos-item__level {
+  color: var(--warn);
+  font-weight: 600;
+  font-size: 12px;
+}
+
+/* ─── Sections ───────────────────────────── */
+
+.ec-section {
+  margin-top: 8px;
+}
+
+.ec-section__title {
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 12px;
+}
+
+/* ─── Report card ────────────────────────── */
+
+.ec-report-card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px;
+}
+
+.ec-report-text {
+  font-family: inherit;
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  margin: 0;
+}
+
+/* ─── Badges ─────────────────────────────── */
+
+.ec-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.ec-badge--offline {
+  background: var(--danger-subtle);
+  color: var(--danger);
+}
+
+.ec-badge--warn {
+  background: var(--warn-subtle);
+  color: var(--warn);
+}
+
+.ec-badge--ok {
+  background: var(--ok-subtle);
+  color: var(--ok);
+}
+
+/* ─── Text colors ────────────────────────── */
+
+.ec-text--ok { color: var(--ok); }
+.ec-text--warn { color: var(--warn); }
+.ec-text--danger { color: var(--danger); }
+.ec-text--muted { color: var(--muted); }
+
+/* ─── Config View ────────────────────────── */
+
+.ec-config {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4, 16px);
+}
+
+.ec-config-tabs {
+  display: flex;
+  gap: 4px;
+  border-bottom: 1px solid var(--border);
+  padding-bottom: 0;
+}
+
+.ec-config-tab {
+  padding: 8px 16px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--muted);
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  cursor: pointer;
+  transition: color var(--duration-normal) var(--ease-out),
+              border-color var(--duration-normal) var(--ease-out);
+}
+
+.ec-config-tab:hover {
+  color: var(--text);
+}
+
+.ec-config-tab--active {
+  color: var(--accent);
+  border-bottom-color: var(--accent);
+}
+
+.ec-config-section {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4, 16px);
+}
+
+.ec-config-section__title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-strong);
+  margin-bottom: 12px;
+}
+
+.ec-config-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 12px;
+}
+
+.ec-config-field__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.ec-config-field__input {
+  padding: 8px 10px;
+  font-size: 13px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  outline: none;
+  transition: border-color var(--duration-normal) var(--ease-out);
+}
+
+.ec-config-field__input:focus {
+  border-color: var(--accent);
+}
+
+.ec-config-field__hint {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.ec-config-actions {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+/* ─── Contact list (config) ──────────────── */
+
+.ec-contact-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.ec-contact-item {
+  display: grid;
+  grid-template-columns: 1fr 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 8px;
+  background: var(--bg);
+  border-radius: 6px;
+}
+
+.ec-contact-item__name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-strong);
+}
+
+.ec-contact-item__phone {
+  font-size: 13px;
+  color: var(--muted);
+  font-family: var(--font-mono, monospace);
+}
+
+.ec-contact-item__role {
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--accent-subtle);
+  color: var(--accent);
+}
+
+/* ─── Responsive ─────────────────────────── */
+
+@media (max-width: 768px) {
+  .ec-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ec-sensor-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+
+  .ec-sos-item {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+
+  .ec-contact-item {
+    grid-template-columns: 1fr 1fr;
+  }
+}

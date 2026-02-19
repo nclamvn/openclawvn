@@ -25,6 +25,17 @@ export default defineConfig(({ command }) => {
       outDir: path.resolve(here, "../dist/control-ui"),
       emptyOutDir: true,
       sourcemap: true,
+      rollupOptions: {
+        output: {
+          manualChunks(id) {
+            if (id.includes("node_modules")) {
+              if (id.includes("/lit/") || id.includes("/lit-html/") || id.includes("/@lit/") || id.includes("/lit-element/")) return "vendor-lit";
+              if (id.includes("/marked/") || id.includes("/dompurify/")) return "vendor-markdown";
+              if (id.includes("/@noble/")) return "vendor-crypto";
+            }
+          },
+        },
+      },
     },
     server: {
       host: true,

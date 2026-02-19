@@ -1,0 +1,35 @@
+/* Split View — dual-pane agent chat */
+.split-view {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.split-view__pane {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  overflow: hidden;
+  border-top: 2px solid transparent;
+  transition: border-color 200ms;
+}
+
+.split-view__pane--focused {
+  border-top-color: var(--accent);
+}
+
+/* Mobile: show only focused pane, hide divider */
+@media (max-width: 768px) {
+  .split-view__pane:not(.split-view__pane--focused) {
+    display: none;
+  }
+
+  .split-view__pane--focused {
+    flex: 1 1 100% !important;
+  }
+
+  .split-view resizable-divider {
+    display: none;
+  }
+}

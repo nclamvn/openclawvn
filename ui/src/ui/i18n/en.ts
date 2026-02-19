@@ -16,19 +16,30 @@ export const en = {
     config: "Config",
     debug: "Debug",
     logs: "Logs",
-    // Update
-    update: "UPDATE",
-    checkUpdate: "Check for updates",
-    newVersion: "New version",
-    currentVersion: "Current version",
-    latestVersion: "Latest version",
-    upToDate: "Up to date",
-    updateAvailable: "Update available",
+    memory: "Memory",
+    docs: "Docs",
+    projects: "Projects",
+    deploy: "Deploy",
+    preview: "Preview",
+    eldercare: "Eldercare",
+    eldercareConfig: "Eldercare Config",
 
-    // Groups
+    // Groups - Minimal 2-group structure
+    core: "Core",
+    admin: "Admin",
+    deployGroup: "Deploy",
+    eldercare: "Eldercare",
+
+    // Legacy groups (keep for compatibility)
+    conversations: "CONVERSATIONS",
+    connections: "CONNECTIONS",
+    activity: "ACTIVITY",
+    settings: "SETTINGS",
+    resources: "RESOURCES",
+
+    // Legacy groups (keep for compatibility)
     control: "CONTROL",
     agent: "AGENT",
-    settings: "SETTINGS",
 
     // Subtitles
     subtitles: {
@@ -43,6 +54,12 @@ export const en = {
       config: "Edit ~/.openclaw/openclaw.json safely.",
       debug: "Gateway snapshots, events and manual RPC calls.",
       logs: "Live tail gateway file logs.",
+      memory: "Browse and manage user facts extracted from conversations.",
+      projects: "Manage projects, scan environments and check health.",
+      deploy: "Deploy projects to production or staging targets.",
+      preview: "Create and manage preview deployments with shareable URLs.",
+      eldercare: "Monitor grandma's health, alerts, calls and daily activities.",
+      eldercareConfig: "Configure monitoring thresholds, SOS contacts, music and video calls.",
     },
   },
 
@@ -127,7 +144,7 @@ export const en = {
   sidebar: {
     expand: "Expand sidebar",
     collapse: "Collapse sidebar",
-    checkUpdate: "Check updates from upstream OpenClaw",
+    docs: "Documentation (new tab)",
   },
 
   // ============================================
@@ -153,6 +170,7 @@ export const en = {
 
     // Quick actions
     quickActions: {
+      build: "Build app",
       code: "Write code",
       write: "Write text",
       create: "Create",
@@ -160,16 +178,29 @@ export const en = {
       analyze: "Analyze",
     },
 
+    // Vibecode Kit
+    vibecode: {
+      quickStart: "Choose project type",
+      landing: "Landing Page",
+      saas: "SaaS App",
+      dashboard: "Dashboard",
+      blog: "Blog",
+      portfolio: "Portfolio",
+      steps: { vision: "VISION", context: "CONTEXT", blueprint: "BLUEPRINT", contract: "CONTRACT", build: "BUILD", refine: "REFINE" },
+      viewBlueprint: "View Blueprint",
+      buildingWith: "Building with Vibecode",
+    },
+
     // Model selector
     selectModel: "Select model",
     apiKey: "API Key",
     enterApiKey: "Enter API key...",
-    saveTemp: "Save temp (frontend)",
-    savePerm: "Save permanent (backend)",
-    tempLabel: "TEMP",
-    permLabel: "PERM",
-    saveToAuthProfiles: "Save to auth-profiles (permanent)",
-    saveSessionOnly: "Save for this session only",
+    apiKeyNeeded: "Enter API key to start chatting",
+    apiKeySaved: "API key saved!",
+    configureApiKey: "Configure API key",
+    saveToGateway: "Save to gateway (auth-profiles)",
+    apiKeySaveError: "Failed to save — check console",
+    apiKeySaving: "Saving...",
 
     // Providers
     providers: {
@@ -182,11 +213,19 @@ export const en = {
     attachmentPreview: "Attachment preview",
     removeAttachment: "Remove attachment",
     attachImage: "Attach image",
+    attachFile: "Attach file",
+    fileTooLarge: "File exceeds 5 MB limit",
+    unsupportedFileType: "Unsupported file type",
 
     // Voice
     stopRecording: "Stop recording",
     voiceInput: "Voice input",
     microphoneError: "Cannot access microphone",
+    voiceError: "Voice recognition error",
+    voiceListening: "Listening...",
+    voiceSpeaking: "Speaking...",
+    ttsOn: "Enable voice response",
+    ttsOff: "Disable voice response",
 
     // Send button
     stop: "Stop",
@@ -235,6 +274,8 @@ export const en = {
       onGatewayHost: "on the gateway host.",
       httpFallback: "If HTTP is required, set",
       tokenOnly: "(token only).",
+      insecureBanner: "Insecure mode active — security checks are relaxed.",
+      insecureDetail: "This gateway has dangerous security overrides enabled. Review your config.",
     },
 
     // Snapshot
@@ -336,6 +377,26 @@ export const en = {
 
     empty: "No sessions found.",
     store: "Store:",
+
+    viewTable: "Table",
+    viewCards: "Cards",
+
+    card: {
+      resume: "Resume",
+      rename: "Rename",
+      delete: "Delete",
+      messages: "messages",
+      noMessages: "No messages",
+      untitled: "Untitled session",
+    },
+
+    switcher: {
+      newSession: "New session",
+      viewAll: "View all sessions",
+      recentSessions: "Recent sessions",
+      noSessions: "No recent sessions",
+      current: "current",
+    },
   },
 
   // ============================================
@@ -435,6 +496,48 @@ export const en = {
 
     apiKey: "API Key",
     saveKey: "Save Key",
+
+    catalog: {
+      title: "Skills",
+      hint: "Manage plugins, channels, tools and services.",
+      search: "Search skills...",
+      empty: "No skills found.",
+      filters: {
+        all: "All",
+        installed: "Installed",
+        channel: "Channels",
+        tool: "Tools",
+        service: "Services",
+        memory: "Memory",
+        provider: "Auth",
+        skill: "Skills",
+      },
+      status: {
+        active: "Active",
+        disabled: "Disabled",
+        needsConfig: "Needs config",
+        error: "Error",
+        notInstalled: "Not installed",
+      },
+      actions: {
+        install: "Install",
+        settings: "Settings",
+        enable: "Enable",
+        disable: "Disable",
+      },
+      settings: {
+        title: "Settings: {name}",
+        type: "Type",
+        source: "Source",
+        config: "Configuration",
+        noConfig: "No configuration available.",
+        envVars: "Environment variables",
+        addEnvVar: "Add variable",
+        save: "Save",
+        cancel: "Cancel",
+        saving: "Saving...",
+      },
+    },
   },
 
   // ============================================
@@ -469,6 +572,8 @@ export const en = {
       tokens: "Tokens",
       active: "active",
       revoked: "revoked",
+      expired: "expired",
+      expiresIn: "expires",
       rotate: "Rotate",
       revoke: "Revoke",
     },
@@ -754,7 +859,47 @@ export const en = {
   devices: {
     confirmReject: "Reject this device pairing request?",
     newTokenPrompt: "New device token (copy and store safely):",
+    tokenCopied: "Token copied to clipboard. Store it safely.",
     confirmRevoke: "Revoke token for",
+    status: {
+      active: "Active",
+      expiring: "Expiring soon",
+      expired: "Expired",
+      revoked: "Revoked",
+      pending: "Pending",
+    },
+    tokenExpiry: "Token expires:",
+    tokenExpired: "Token expired",
+    tokenNeverExpires: "Token never expires",
+    lastIp: "Last IP:",
+    renewToken: "Renew",
+    copyToken: "Copy Token",
+    tokenWarning: "Token shown once only. Save it now.",
+    activity: "Recent activity",
+    viewMore: "View more...",
+    noActivity: "No activity yet",
+    insecureBanner: "INSECURE MODE",
+    insecureDetail: "Device auth is disabled. Not for production.",
+    viewDetails: "View details",
+    events: {
+      auth_success: "Connected",
+      auth_failure: "Login failed",
+      "auth_rate-limited": "Locked out",
+      device_paired: "Paired",
+      device_rejected: "Pair rejected",
+      token_rotate: "Token rotated",
+      token_revoke: "Token revoked",
+      token_renew: "Token renewed",
+      token_expired: "Token expired",
+      cors_rejected: "Origin rejected",
+      ip_mismatch: "IP changed",
+      ip_rejected: "IP rejected",
+      scope_violation: "Permission denied",
+      insecure_mode: "Insecure mode",
+      session_created: "Session created",
+      session_deleted: "Session deleted",
+      session_reset: "Session reset",
+    },
   },
 
   controllers: {
@@ -955,6 +1100,38 @@ export const en = {
   },
 
   // ============================================
+  // MEMORY
+  // ============================================
+  memory: {
+    title: "Memory",
+    search: "Search memories...",
+    extractButton: "Extract",
+    extracting: "Extracting...",
+    extracted: "Extracted!",
+    empty: "No memories yet.",
+    privacy: "Memories are stored locally and never shared.",
+    deleteConfirm: "Delete this memory?",
+    save: "Save",
+    cancel: "Cancel",
+    verified: "Verified",
+    unverified: "Unverified",
+    // Indicator (chat header)
+    indicatorActive: "memories active",
+    indicatorOff: "Memory off",
+    indicatorToggle: "Toggle memory",
+    indicatorNone: "No memories",
+    categories: {
+      all: "All",
+      identity: "Identity",
+      preference: "Preference",
+      project: "Project",
+      relationship: "Relationship",
+      skill: "Skill",
+      fact: "Fact",
+    },
+  },
+
+  // ============================================
   // NOSTR PROFILE FORM
   // ============================================
   nostrProfile: {
@@ -993,6 +1170,230 @@ export const en = {
     showAdvanced: "Show advanced",
     hideAdvanced: "Hide advanced",
     unsavedChanges: "You have unsaved changes",
+  },
+
+  // ============================================
+  // AGENT TABS
+  // ============================================
+  agentTabs: {
+    newTab: "New tab",
+    closeTab: "Close tab",
+    closeConfirm: "Close this tab? The session will be archived.",
+    rename: "Rename",
+    presets: {
+      title: "Choose agent type",
+      code: "Code",
+      writer: "Writer",
+      research: "Research",
+      translator: "Translator",
+      custom: "Custom",
+    },
+    unread: "unread",
+    pin: "Pin tab",
+    unpin: "Unpin tab",
+    splitView: "Split view",
+    focusLeft: "Focus left pane",
+    focusRight: "Focus right pane",
+  },
+
+  // ============================================
+  // PROJECTS
+  // ============================================
+  projects: {
+    title: "Projects",
+    description: "Registered projects and environment health.",
+    empty: "No projects found.",
+    scan: "Scan",
+    scanning: "Scanning...",
+    scanned: "Scanned!",
+    rescan: "Rescan",
+    addProject: "Add Project",
+    health: {
+      healthy: "Healthy",
+      warning: "Warning",
+      error: "Error",
+      unknown: "Unknown",
+    },
+    env: {
+      title: "Environment",
+      valid: "Valid",
+      missing: "Missing variables",
+      check: "Check env",
+    },
+    card: {
+      lastDeploy: "Last deploy",
+      platform: "Platform",
+      branch: "Branch",
+      never: "Never",
+    },
+  },
+
+  // ============================================
+  // DEPLOY
+  // ============================================
+  deploy: {
+    title: "Deploy",
+    description: "Deploy projects to production or staging.",
+    empty: "No deployments yet.",
+    start: "Deploy",
+    deploying: "Deploying...",
+    cancel: "Cancel",
+    platform: "Platform",
+    target: "Target",
+    branch: "Branch",
+    selectProject: "Select project",
+    selectPlatform: "Select platform",
+    platforms: {
+      fly: "Fly.io",
+      railway: "Railway",
+      vercel: "Vercel",
+      docker: "Docker",
+      custom: "Custom",
+    },
+    targets: {
+      production: "Production",
+      staging: "Staging",
+      preview: "Preview",
+    },
+    status: {
+      pending: "Pending",
+      building: "Building",
+      deploying: "Deploying",
+      success: "Success",
+      failed: "Failed",
+      cancelled: "Cancelled",
+    },
+    log: {
+      title: "Deploy Log",
+      empty: "No output yet.",
+      copy: "Copy log",
+      download: "Download log",
+    },
+    history: {
+      title: "History",
+      empty: "No deploy history.",
+      viewLog: "View log",
+    },
+    confirm: {
+      title: "Confirm deploy",
+      message: "Deploy {project} to {target}?",
+      proceed: "Deploy now",
+    },
+  },
+
+  // ============================================
+  // PREVIEW
+  // ============================================
+  preview: {
+    title: "Preview",
+    description: "Preview deployments with shareable URLs.",
+    empty: "No preview deployments.",
+    create: "Create Preview",
+    creating: "Creating...",
+    delete: "Delete",
+    deleting: "Deleting...",
+    promote: "Promote to production",
+    promoting: "Promoting...",
+    open: "Open preview",
+    copyUrl: "Copy URL",
+    urlCopied: "URL copied!",
+    iframe: {
+      title: "Preview",
+      loading: "Loading preview...",
+      openExternal: "Open in new tab",
+    },
+    card: {
+      branch: "Branch",
+      created: "Created",
+      expires: "Expires",
+      url: "URL",
+    },
+    form: {
+      project: "Project",
+      branch: "Branch",
+      branchPlaceholder: "feature/my-branch",
+    },
+  },
+
+  // ============================================
+  // ELDERCARE — GRANDMA CARE
+  // ============================================
+  eldercare: {
+    // Dashboard
+    grandmaStatus: "Grandma Status",
+    roomEnvironment: "Room Environment",
+    familyCalls: "Family Calls",
+    companionActivity: "Companion Activity",
+    presence: "Presence",
+    inRoom: "In room",
+    noMotion: "No motion",
+    currentLevel: "Current Level",
+    checksToday: "Checks Today",
+    alertsToday: "Alerts Today",
+    temperature: "Temperature",
+    humidity: "Humidity",
+    motion: "Motion",
+    tempOutOfRange: "⚠️ Temperature outside comfort range (20-35°C)",
+    humidityOutOfRange: "⚠️ Humidity outside comfort range (40-80%)",
+    musicSessions: "Music Sessions",
+    reminders: "Reminders",
+    storyActive: "Story Active",
+    yes: "Yes",
+    no: "No",
+    noCalls: "No one called grandma today",
+    sosActive: "SOS ACTIVE — Needs immediate attention!",
+    sosActiveShort: "Active",
+    resolved: "Resolved",
+    sosEventsToday: "SOS Events Today",
+    lastReport: "Latest Report",
+    haOffline: "HA offline",
+    refreshing: "Loading...",
+    levels: {
+      normal: "Normal",
+      attention: "Attention",
+      warning: "Warning",
+      emergency: "Emergency",
+    } as Record<string, string>,
+    // Config sections
+    configSections: {
+      monitor: "Monitor",
+      sos: "SOS",
+      companion: "Companion",
+      videocall: "Video Call",
+    } as Record<string, string>,
+    config: {
+      monitorThresholds: "Monitor Thresholds",
+      noMotionAttention: "No motion → Attention (min)",
+      noMotionWarning: "No motion → Warning (min)",
+      noMotionEmergency: "No motion → Emergency (min)",
+      minutesHint: "Minutes without motion before alert",
+      temperatureThresholds: "Temperature Thresholds",
+      tempLow: "Low temperature (°C)",
+      tempHigh: "High temperature (°C)",
+      haEntities: "Entity IDs (Home Assistant)",
+      sosContacts: "SOS Contacts",
+      noContacts: "No SOS contacts configured",
+      contactsHint: "Edit via memory key eldercare_contacts",
+      escalationLevels: "Escalation Levels",
+      level1Desc: "Send to Zalo family group",
+      level2Desc: "Send Telegram + Zalo",
+      level3Desc: "Call everyone + continuous alerts",
+      minutes: "min",
+      musicSettings: "Music Settings",
+      defaultPlaylist: "Default Playlist",
+      volume: "Volume (0-1)",
+      ttsSettings: "TTS Settings",
+      ttsRate: "Speech Rate",
+      ttsRateHint: "0.8 = slower than normal (better for grandma)",
+      ttsVoice: "TTS Voice",
+      tabletSettings: "Tablet Settings",
+      tabletIp: "Tablet IP",
+      fullyKioskPassword: "Fully Kiosk Password",
+      scheduleSettings: "Call Schedule",
+      morningReminder: "Morning Reminder Time",
+      quietHoursStart: "Quiet Hours Start",
+      quietHoursEnd: "Quiet Hours End",
+    },
   },
 } as const;
 

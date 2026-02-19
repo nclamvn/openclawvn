@@ -17,12 +17,16 @@ import type {
   HealthSnapshot,
   LogEntry,
   LogLevel,
+  MemoryCategory,
   PresenceEntry,
   ChannelsStatusSnapshot,
   SessionsListResult,
+  SkillCatalogEntry,
+  SkillCatalogKind,
   SkillStatusReport,
   StatusSummary,
   NostrProfile,
+  UserFact,
 } from "./types";
 import { type ChatAttachment, type ChatQueueItem, type CronFormState } from "./ui-types";
 import type { EventLogEntry } from "./app-events";
@@ -75,6 +79,27 @@ import {
 } from "./app-channels";
 import type { NostrProfileFormState } from "./views/channels.nostr-profile-form";
 import { loadAssistantIdentity as loadAssistantIdentityInternal } from "./controllers/assistant-identity";
+import { connectionManager, type ConnectionState } from "./connection/connection-manager";
+import { loadMemory as loadMemoryInternal } from "./controllers/memory";
+import { type SetupGuideState, createSetupGuideState } from "./views/setup-guide";
+import type { AgentTab } from "./controllers/agent-tabs";
+import {
+  loadProjects as loadProjectsInternal,
+  scanProject as scanProjectInternal,
+} from "./controllers/projects";
+import {
+  deployProject as deployProjectInternal,
+  loadDeployHistory as loadDeployHistoryInternal,
+  loadPreviews as loadPreviewsInternal,
+  createPreview as createPreviewInternal,
+  deletePreview as deletePreviewInternal,
+  promotePreview as promotePreviewInternal,
+  type ProjectInfo,
+  type DeployRecord,
+  type DeployPlatform,
+  type DeployStatus,
+  type PreviewRecord,
+} from "./controllers/deploys";
 
 declare global {
   interface Window {
@@ -100,10 +125,6 @@ export class OpenClawApp extends LitElement {
   @state() tab: Tab = "chat";
   @state() onboarding = resolveOnboardingMode();
   @state() connected = false;
-  // Update check state
-  @state() updateAvailable = false;
-  @state() latestVersion: string | null = null;
-  @state() currentVersion = "2026.2.3";
   @state() theme: ThemeMode = this.settings.theme ?? "system";
   @state() themeResolved: ResolvedTheme = "dark";
   @state() hello: GatewayHelloOk | null = null;
@@ -112,6 +133,18 @@ export class OpenClawApp extends LitElement {
   private eventLogBuffer: EventLogEntry[] = [];
   private toolStreamSyncTimer: number | null = null;
   private sidebarCloseTimer: number | null = null;
+
+  // Command palette state
+  @state() commandPaletteOpen = false;
+  @state() commandPaletteQuery = "";
+  @state() commandPaletteSelectedIndex = 0;
+
+  // Connection state
+  @state() connectionState: ConnectionState = {
+    status: 'disconnected',
+    retryCount: 0,
+  };
+  @state() setupGuideState: SetupGuideState = createSetupGuideState();
 
   @state() assistantName = injectedAssistantIdentity.name;
   @state() assistantAvatar = injectedAssistantIdentity.avatar;
@@ -131,14 +164,27 @@ export class OpenClawApp extends LitElement {
   @state() chatThinkingLevel: string | null = null;
   @state() chatQueue: ChatQueueItem[] = [];
   @state() chatAttachments: ChatAttachment[] = [];
+  // Session switcher state
+  @state() sessionSwitcherOpen = false;
+  // Agent tabs state
+  @state() agentTabs: AgentTab[] = this.settings.agentTabs ?? [];
+  @state() agentPresetPickerOpen = false;
+  // Split view state
+  @state() focusedPane: "left" | "right" = "left";
   // Model selector state
   @state() chatModelSelectorOpen = false;
   @state() chatCurrentModel = "Opus 4.5";
   @state() chatSelectedProvider = "anthropic";
   @state() chatApiKeys: Record<string, string> = {};
-  @state() chatApiKeySaveMode: 'temp' | 'permanent' = 'temp';
-  // Voice recording state
+  @state() chatApiKeyInputOpen = false;
+  @state() chatApiKeySaveStatus: 'idle' | 'saving' | 'saved' | 'error' = 'idle';
+  // Voice state
   @state() chatIsRecording = false;
+  @state() voiceInterimTranscript = "";
+  @state() voiceSupported = false;
+  @state() voiceMode: "idle" | "listening" | "speaking" = "idle";
+  @state() ttsEnabled = false;
+  @state() ttsSupported = false;
   private mediaRecorder: MediaRecorder | null = null;
   private audioChunks: Blob[] = [];
   // Sidebar state for tool output viewing
@@ -231,6 +277,94 @@ export class OpenClawApp extends LitElement {
   @state() skillEdits: Record<string, string> = {};
   @state() skillsBusyKey: string | null = null;
   @state() skillMessages: Record<string, SkillMessage> = {};
+  // Catalog state
+  @state() skillsCatalog: SkillCatalogEntry[] = [];
+  @state() skillsCatalogLoading = false;
+  @state() skillsCatalogError: string | null = null;
+  @state() skillsFilterKind: SkillCatalogKind | "all" | "installed" = "all";
+  @state() skillsSearch = "";
+  // Settings panel state
+  @state() skillsSettingsOpen = false;
+  @state() skillsSettingsSkillId: string | null = null;
+  @state() skillsSettingsSchema: Record<string, unknown> | null = null;
+  @state() skillsSettingsUiHints: Record<string, unknown> | null = null;
+  @state() skillsSettingsCurrentConfig: Record<string, unknown> | null = null;
+  @state() skillsSettingsLoading = false;
+  @state() skillsSettingsSaving = false;
+  @state() skillsSettingsFormValues: Record<string, unknown> = {};
+  @state() skillsSettingsEnvVars: Array<{ key: string; value: string }> = [];
+
+  @state() memoryLoading = false;
+  @state() memoryFacts: UserFact[] = [];
+  @state() memoryError: string | null = null;
+  @state() memoryFilter: MemoryCategory | "all" = "all";
+  @state() memorySearch = "";
+  @state() memoryEditingId: string | null = null;
+  @state() memoryEditDraft = "";
+  @state() memoryExtracting = false;
+  @state() memoryExtractStatus: "idle" | "extracting" | "extracted" = "idle";
+
+  // Projects state
+  @state() projectsLoading = false;
+  @state() projectsList: ProjectInfo[] = [];
+  @state() projectsError: string | null = null;
+  @state() projectsScanning = false;
+  @state() projectsScanStatus: "idle" | "scanning" | "scanned" = "idle";
+
+  // Deploy state
+  @state() deployLoading = false;
+  @state() deployHistory: DeployRecord[] = [];
+  @state() deployError: string | null = null;
+  @state() deployActiveId: string | null = null;
+  @state() deployStatus: DeployStatus | null = null;
+  @state() deployLogLines: string[] = [];
+  @state() deploySelectedProject: string | null = null;
+  @state() deploySelectedPlatform: DeployPlatform | null = null;
+  @state() deploySelectedTarget: "production" | "staging" | "preview" = "production";
+  @state() deploySelectedBranch = "";
+  @state() deployRunning = false;
+
+  // Preview state
+  @state() previewLoading = false;
+  @state() previewList: PreviewRecord[] = [];
+  @state() previewError: string | null = null;
+  @state() previewCreating = false;
+  @state() previewDeleting: string | null = null;
+  @state() previewPromoting: string | null = null;
+  @state() previewSelectedProject: string | null = null;
+  @state() previewBranch = "";
+  @state() previewIframeUrl: string | null = null;
+
+  // Eldercare dashboard state
+  @state() eldercareLoading = false;
+  @state() eldercareError: string | null = null;
+  @state() eldercareHaConnected = false;
+  @state() eldercareRoom: import("./controllers/eldercare").EldercareRoomData = { temperature: null, humidity: null, motionMinutes: null, presence: null };
+  @state() eldercareSummary: import("./controllers/eldercare").EldercareDailySummary = { checksToday: 0, alertsToday: 0, highestLevel: "normal", callsToday: [], musicPlayed: 0, remindersDelivered: 0, storyActive: false, sosEvents: [], lastReport: null, lastReportDate: null };
+  @state() eldercareLastCheck: import("./controllers/eldercare").EldercareCheck | null = null;
+  @state() eldercareSosActive = false;
+
+  // Eldercare config state
+  @state() eldercareConfigLoading = false;
+  @state() eldercareConfigSaving = false;
+  @state() eldercareConfigError: string | null = null;
+  @state() eldercareConfigSection: import("./views/eldercare-config").EldercareConfigSection = "monitor";
+  @state() eldercareMonitorConfig: Record<string, unknown> | null = null;
+  @state() eldercareSosContacts: import("./views/eldercare-config").EldercareContact[] = [];
+  @state() eldercareCompanionConfig: Record<string, unknown> | null = null;
+  @state() eldercareVideocallConfig: Record<string, unknown> | null = null;
+  @state() eldercareHaEntities: Record<string, string> = {
+    presence: "binary_sensor.grandma_room_presence",
+    temperature: "sensor.grandma_room_temperature",
+    humidity: "sensor.grandma_room_humidity",
+    motion: "sensor.grandma_room_motion_minutes",
+  };
+
+  // Memory indicator (chat header)
+  @state() memoryIndicatorEnabled = true;
+  @state() memoryIndicatorFacts: UserFact[] = [];
+  @state() memoryIndicatorTotal = 0;
+  @state() memoryIndicatorExpanded = false;
 
   @state() debugLoading = false;
   @state() debugStatus: StatusSummary | null = null;
@@ -283,6 +417,20 @@ export class OpenClawApp extends LitElement {
 
   connectedCallback() {
     super.connectedCallback();
+    // Subscribe to connection manager state
+    connectionManager.subscribe((state) => {
+      this.connectionState = state;
+    });
+    // Detect voice/TTS support
+    const w = window as unknown as Record<string, unknown>;
+    this.voiceSupported = !!(w.SpeechRecognition ?? w.webkitSpeechRecognition);
+    this.ttsSupported = typeof speechSynthesis !== "undefined" && speechSynthesis.getVoices().some((v) => v.lang.startsWith("vi"));
+    // Some browsers load voices async — re-check on voiceschanged
+    if (typeof speechSynthesis !== "undefined") {
+      speechSynthesis.addEventListener("voiceschanged", () => {
+        this.ttsSupported = speechSynthesis.getVoices().some((v) => v.lang.startsWith("vi"));
+      });
+    }
     handleConnected(this as unknown as Parameters<typeof handleConnected>[0]);
   }
 
@@ -351,6 +499,10 @@ export class OpenClawApp extends LitElement {
 
   async loadCron() {
     await loadCronInternal(this as unknown as Parameters<typeof loadCronInternal>[0]);
+  }
+
+  async handleLoadMemory() {
+    await loadMemoryInternal(this);
   }
 
   async handleAbortChat() {
@@ -461,6 +613,10 @@ export class OpenClawApp extends LitElement {
     this.sidebarContent = content;
     this.sidebarError = null;
     this.sidebarOpen = true;
+    // Auto-collapse nav sidebar when content panel opens (Claude-style)
+    if (!this.settings.navCollapsed) {
+      this.applySettings({ ...this.settings, navCollapsed: true });
+    }
   }
 
   handleCloseSidebar() {
@@ -481,6 +637,202 @@ export class OpenClawApp extends LitElement {
     const newRatio = Math.max(0.4, Math.min(0.7, ratio));
     this.splitRatio = newRatio;
     this.applySettings({ ...this.settings, splitRatio: newRatio });
+  }
+
+  // Setup guide handlers
+  showSetupGuide() {
+    this.setupGuideState = { ...this.setupGuideState, isOpen: true };
+  }
+
+  hideSetupGuide() {
+    this.setupGuideState = { ...this.setupGuideState, isOpen: false, currentStep: 0 };
+  }
+
+  async checkGateway() {
+    this.setupGuideState = { ...this.setupGuideState, checkingGateway: true };
+    try {
+      const running = await connectionManager.checkGatewayHealth();
+      this.setupGuideState = {
+        ...this.setupGuideState,
+        checkingGateway: false,
+        gatewayRunning: running,
+      };
+    } catch {
+      this.setupGuideState = {
+        ...this.setupGuideState,
+        checkingGateway: false,
+        gatewayRunning: false,
+      };
+    }
+  }
+
+  setupGuideNextStep() {
+    this.setupGuideState = {
+      ...this.setupGuideState,
+      currentStep: Math.min(this.setupGuideState.currentStep + 1, 2),
+    };
+  }
+
+  setupGuidePrevStep() {
+    this.setupGuideState = {
+      ...this.setupGuideState,
+      currentStep: Math.max(this.setupGuideState.currentStep - 1, 0),
+    };
+  }
+
+  async copyCommand(cmd: string) {
+    try {
+      await navigator.clipboard.writeText(cmd);
+      this.setupGuideState = { ...this.setupGuideState, copiedCommand: cmd };
+      setTimeout(() => {
+        this.setupGuideState = { ...this.setupGuideState, copiedCommand: null };
+      }, 2000);
+    } catch {
+      // Fallback for older browsers
+      const textarea = document.createElement('textarea');
+      textarea.value = cmd;
+      document.body.appendChild(textarea);
+      textarea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textarea);
+    }
+  }
+
+  connectFromGuide() {
+    this.hideSetupGuide();
+    connectionManager.reconnect();
+    this.connect();
+  }
+
+  retryConnection() {
+    connectionManager.reconnect();
+    this.connect();
+  }
+
+  async handleLoadProjects() {
+    await loadProjectsInternal(this);
+  }
+
+  async handleScanProject(projectId: string) {
+    await scanProjectInternal(this, projectId);
+  }
+
+  async handleDeploy() {
+    await deployProjectInternal(this);
+  }
+
+  async handleLoadDeployHistory() {
+    await loadDeployHistoryInternal(this);
+  }
+
+  async handleLoadPreviews() {
+    await loadPreviewsInternal(this);
+  }
+
+  async handleCreatePreview() {
+    await createPreviewInternal(this);
+  }
+
+  async handleDeletePreview(previewId: string) {
+    await deletePreviewInternal(this, previewId);
+  }
+
+  async handlePromotePreview(previewId: string) {
+    await promotePreviewInternal(this, previewId);
+  }
+
+  // Eldercare handlers
+  async handleEldercareLoadConfig() {
+    if (!this.client || !this.connected) return;
+    this.eldercareConfigLoading = true;
+    this.eldercareConfigError = null;
+    try {
+      // Load config files from memory
+      const res = (await this.client.request("memory.search", {
+        query: "eldercare_config",
+        limit: 20,
+      })) as Array<{ id: string; content: string }> | undefined;
+      const facts = Array.isArray(res) ? res : [];
+      for (const fact of facts) {
+        try {
+          const data = JSON.parse(fact.content);
+          if (fact.id === "eldercare_monitor_config") this.eldercareMonitorConfig = data;
+          if (fact.id === "eldercare_companion_config") this.eldercareCompanionConfig = data;
+          if (fact.id === "eldercare_videocall_config") this.eldercareVideocallConfig = data;
+          if (fact.id === "eldercare_contacts") {
+            this.eldercareSosContacts = Array.isArray(data) ? data : [];
+          }
+        } catch {
+          // skip
+        }
+      }
+    } catch (err) {
+      this.eldercareConfigError = String(err);
+    } finally {
+      this.eldercareConfigLoading = false;
+    }
+  }
+
+  async handleEldercareSaveConfig() {
+    if (!this.client || !this.connected) return;
+    this.eldercareConfigSaving = true;
+    this.eldercareConfigError = null;
+    try {
+      if (this.eldercareMonitorConfig) {
+        await this.client.request("memory.upsert", {
+          key: "eldercare_monitor_config",
+          content: JSON.stringify(this.eldercareMonitorConfig),
+        });
+      }
+      if (this.eldercareCompanionConfig) {
+        await this.client.request("memory.upsert", {
+          key: "eldercare_companion_config",
+          content: JSON.stringify(this.eldercareCompanionConfig),
+        });
+      }
+      if (this.eldercareVideocallConfig) {
+        await this.client.request("memory.upsert", {
+          key: "eldercare_videocall_config",
+          content: JSON.stringify(this.eldercareVideocallConfig),
+        });
+      }
+      if (this.eldercareSosContacts.length > 0) {
+        await this.client.request("memory.upsert", {
+          key: "eldercare_contacts",
+          content: JSON.stringify(this.eldercareSosContacts),
+        });
+      }
+    } catch (err) {
+      this.eldercareConfigError = String(err);
+    } finally {
+      this.eldercareConfigSaving = false;
+    }
+  }
+
+  handleEldercareConfigChange(section: string, path: string[], value: unknown) {
+    const setNested = (obj: Record<string, unknown>, keys: string[], val: unknown) => {
+      const clone = { ...obj };
+      let current: Record<string, unknown> = clone;
+      for (let i = 0; i < keys.length - 1; i++) {
+        const k = keys[i];
+        current[k] = { ...(current[k] as Record<string, unknown> ?? {}) };
+        current = current[k] as Record<string, unknown>;
+      }
+      current[keys[keys.length - 1]] = val;
+      return clone;
+    };
+
+    switch (section) {
+      case "monitor":
+        this.eldercareMonitorConfig = setNested(this.eldercareMonitorConfig ?? {}, path, value);
+        break;
+      case "companion":
+        this.eldercareCompanionConfig = setNested(this.eldercareCompanionConfig ?? {}, path, value);
+        break;
+      case "videocall":
+        this.eldercareVideocallConfig = setNested(this.eldercareVideocallConfig ?? {}, path, value);
+        break;
+    }
   }
 
   render() {

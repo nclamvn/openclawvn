@@ -1,8 +1,8 @@
-import { html } from "lit";
+import { html, nothing } from "lit";
 import { repeat } from "lit/directives/repeat.js";
 
 import type { AppViewState } from "./app-view-state";
-import { iconForTab, pathForTab, titleForTab, type Tab } from "./navigation";
+import { iconForTab, pathForTab, titleForTab, TAB_GROUPS, type Tab } from "./navigation";
 import { icons } from "./icons";
 import { loadChatHistory } from "./controllers/chat";
 import { refreshChat } from "./app-chat";
@@ -12,9 +12,23 @@ import type { ThemeMode } from "./theme";
 import type { ThemeTransitionContext } from "./theme-transition";
 import type { Language } from "./storage";
 import { setLanguage, t } from "./i18n";
+import { renderSessionSwitcher } from "./components/session-switcher";
+import { renderMemoryIndicator } from "./components/memory-indicator";
 
-export function renderTab(state: AppViewState, tab: Tab) {
+// Get keyboard shortcut for a tab based on its group
+function getTabShortcut(tab: Tab): string | null {
+  for (const group of TAB_GROUPS) {
+    const tabIndex = group.tabs.indexOf(tab);
+    if (tabIndex === 0 && (group as { shortcut?: string }).shortcut) {
+      return `${(group as { shortcut?: string }).shortcut}`;
+    }
+  }
+  return null;
+}
+
+export function renderTab(state: AppViewState, tab: Tab, showShortcut = true) {
   const href = pathForTab(tab, state.basePath);
+  const shortcut = showShortcut ? getTabShortcut(tab) : null;
   return html`
     <a
       href=${href}
@@ -37,7 +51,18 @@ export function renderTab(state: AppViewState, tab: Tab) {
     >
       <span class="nav-item__icon" aria-hidden="true">${icons[iconForTab(tab)]}</span>
       <span class="nav-item__text">${titleForTab(tab)}</span>
+      ${shortcut ? html`<span class="nav-item__shortcut">⌘${shortcut}</span>` : nothing}
     </a>
+  `;
+}
+
+export function renderNavStatus(connected: boolean) {
+  const translations = t();
+  return html`
+    <div class="nav-status">
+      <span class="nav-status__dot ${connected ? 'ok' : 'offline'}"></span>
+      <span class="nav-status__text">${connected ? translations.common.connected : translations.common.disconnected}</span>
+    </div>
   `;
 }
 
@@ -101,6 +126,55 @@ export function renderChatControls(state: AppViewState) {
           )}
         </select>
       </label>
+      ${renderSessionSwitcher({
+        open: state.sessionSwitcherOpen,
+        currentSessionKey: state.sessionKey,
+        sessions: state.sessionsResult,
+        connected: state.connected,
+        onToggle: () => {
+          state.sessionSwitcherOpen = !state.sessionSwitcherOpen;
+        },
+        onSelect: (key) => {
+          state.sessionKey = key;
+          state.chatMessage = "";
+          state.chatStream = null;
+          state.chatStreamStartedAt = null;
+          state.chatRunId = null;
+          state.resetToolStream();
+          state.resetChatScroll();
+          state.applySettings({
+            ...state.settings,
+            sessionKey: key,
+            lastActiveSessionKey: key,
+          });
+          void state.loadAssistantIdentity();
+          syncUrlWithSessionKey(state, key, true);
+          void loadChatHistory(state);
+        },
+        onNewSession: () => {
+          state.sessionSwitcherOpen = false;
+          const newKey = `session-${Date.now()}`;
+          state.sessionKey = newKey;
+          state.chatMessage = "";
+          state.chatStream = null;
+          state.chatStreamStartedAt = null;
+          state.chatRunId = null;
+          state.chatMessages = [];
+          state.resetToolStream();
+          state.resetChatScroll();
+          state.applySettings({
+            ...state.settings,
+            sessionKey: newKey,
+            lastActiveSessionKey: newKey,
+          });
+          void state.loadAssistantIdentity();
+          syncUrlWithSessionKey(state, newKey, true);
+        },
+        onViewAll: () => {
+          state.sessionSwitcherOpen = false;
+          state.setTab("sessions");
+        },
+      })}
       <button
         class="btn btn--sm btn--icon"
         ?disabled=${state.chatLoading || !state.connected}
@@ -113,21 +187,35 @@ export function renderChatControls(state: AppViewState) {
         ${refreshIcon}
       </button>
       <span class="chat-controls__separator">|</span>
-      <button
-        class="btn btn--sm btn--icon ${showThinking ? "active" : ""}"
-        ?disabled=${disableThinkingToggle}
-        @click=${() => {
+      ${renderMemoryIndicator({
+        enabled: state.memoryIndicatorEnabled,
+        facts: state.memoryIndicatorFacts,
+        totalFacts: state.memoryIndicatorTotal,
+        expanded: state.memoryIndicatorExpanded,
+        connected: state.connected,
+        showThinking,
+        disableThinking: disableThinkingToggle,
+        onToggle: () => {
+          state.memoryIndicatorEnabled = !state.memoryIndicatorEnabled;
+          state.memoryIndicatorExpanded = false;
+          if (state.client && state.sessionKey) {
+            void state.client.request("sessions.patch", {
+              key: state.sessionKey,
+              memoryEnabled: state.memoryIndicatorEnabled,
+            });
+          }
+        },
+        onThinkingToggle: () => {
           if (disableThinkingToggle) return;
           state.applySettings({
             ...state.settings,
             chatShowThinking: !state.settings.chatShowThinking,
           });
-        }}
-        aria-pressed=${showThinking}
-        title=${disableThinkingToggle ? t().chat.disabledDuringSetup : t().chat.toggleThinking}
-      >
-        ${icons.brain}
-      </button>
+        },
+        onExpand: () => {
+          state.memoryIndicatorExpanded = !state.memoryIndicatorExpanded;
+        },
+      })}
     </div>
   `;
 }
@@ -206,7 +294,9 @@ function resolveSessionOptions(
 const THEME_ORDER: ThemeMode[] = ["light", "dark"];
 
 export function renderThemeToggle(state: AppViewState) {
-  const themeIndex = Math.max(0, THEME_ORDER.indexOf(state.theme));
+  // Map system theme to resolved theme for display
+  const effectiveTheme = state.theme === "system" ? state.themeResolved : state.theme;
+  const themeIndex = effectiveTheme === "dark" ? 1 : 0;
   const language = state.settings.language || "vi";
   const langIndex = language === "vi" ? 0 : 1;
 
@@ -257,18 +347,18 @@ export function renderThemeToggle(state: AppViewState) {
         <div class="settings-toggle__group" role="group" aria-label="Theme">
           <span class="settings-toggle__indicator settings-toggle__indicator--theme"></span>
           <button
-            class="settings-toggle__button ${state.theme === "light" ? "active" : ""}"
+            class="settings-toggle__button ${effectiveTheme === "light" ? "active" : ""}"
             @click=${applyTheme("light")}
-            aria-pressed=${state.theme === "light"}
+            aria-pressed=${effectiveTheme === "light"}
             aria-label=${t().theme.light}
             title="Light"
           >
             ${renderSunIcon()}
           </button>
           <button
-            class="settings-toggle__button ${state.theme === "dark" ? "active" : ""}"
+            class="settings-toggle__button ${effectiveTheme === "dark" ? "active" : ""}"
             @click=${applyTheme("dark")}
-            aria-pressed=${state.theme === "dark"}
+            aria-pressed=${effectiveTheme === "dark"}
             aria-label=${t().theme.dark}
             title="Dark"
           >
@@ -302,16 +392,6 @@ function renderMoonIcon() {
       <path
         d="M20.985 12.486a9 9 0 1 1-9.473-9.472c.405-.022.617.46.402.803a6 6 0 0 0 8.268 8.268c.344-.215.825-.004.803.401"
       ></path>
-    </svg>
-  `;
-}
-
-function renderMonitorIcon() {
-  return html`
-    <svg class="theme-icon" viewBox="0 0 24 24" aria-hidden="true">
-      <rect width="20" height="14" x="2" y="3" rx="2"></rect>
-      <line x1="8" x2="16" y1="21" y2="21"></line>
-      <line x1="12" x2="12" y1="17" y2="21"></line>
     </svg>
   `;
 }

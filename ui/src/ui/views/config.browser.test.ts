@@ -1,6 +1,7 @@
 import { render } from "lit";
 import { describe, expect, it, vi } from "vitest";
 
+import { t } from "../i18n";
 import { renderConfig } from "./config";
 
 describe("config view", () => {
@@ -60,7 +61,7 @@ describe("config view", () => {
     );
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Save",
+      (btn) => btn.textContent?.trim() === t().common.save,
     ) as HTMLButtonElement | undefined;
     expect(saveButton).not.toBeUndefined();
     expect(saveButton?.disabled).toBe(false);
@@ -80,7 +81,7 @@ describe("config view", () => {
     );
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Save",
+      (btn) => btn.textContent?.trim() === t().common.save,
     ) as HTMLButtonElement | undefined;
     expect(saveButton).not.toBeUndefined();
     expect(saveButton?.disabled).toBe(true);
@@ -99,10 +100,10 @@ describe("config view", () => {
     );
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Save",
+      (btn) => btn.textContent?.trim() === t().common.save,
     ) as HTMLButtonElement | undefined;
     const applyButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Apply",
+      (btn) => btn.textContent?.trim() === t().common.apply,
     ) as HTMLButtonElement | undefined;
     expect(saveButton).not.toBeUndefined();
     expect(applyButton).not.toBeUndefined();
@@ -123,10 +124,10 @@ describe("config view", () => {
     );
 
     const saveButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Save",
+      (btn) => btn.textContent?.trim() === t().common.save,
     ) as HTMLButtonElement | undefined;
     const applyButton = Array.from(container.querySelectorAll("button")).find(
-      (btn) => btn.textContent?.trim() === "Apply",
+      (btn) => btn.textContent?.trim() === t().common.apply,
     ) as HTMLButtonElement | undefined;
     expect(saveButton).not.toBeUndefined();
     expect(applyButton).not.toBeUndefined();

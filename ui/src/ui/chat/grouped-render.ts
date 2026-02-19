@@ -13,6 +13,7 @@ import {
   formatReasoningMarkdown,
 } from "./message-extract";
 import { extractToolCards, renderToolCardSidebar } from "./tool-cards";
+import { icons } from "../icons";
 
 type ImageBlock = {
   url: string;
@@ -221,6 +222,109 @@ function renderMessageImages(images: ImageBlock[]) {
   `;
 }
 
+function detectBlueprintJson(text: string): Record<string, unknown> | null {
+  const jsonBlocks = text.match(/```(?:json)?\s*\n([\s\S]*?)```/g);
+  if (!jsonBlocks) return null;
+
+  for (const block of jsonBlocks) {
+    const jsonStr = block.replace(/```(?:json)?\s*\n?/, '').replace(/```$/, '').trim();
+    try {
+      const parsed = JSON.parse(jsonStr) as Record<string, unknown>;
+      if (parsed.project && parsed.design && parsed.structure) {
+        return parsed;
+      }
+    } catch {
+      // not valid JSON
+    }
+  }
+  return null;
+}
+
+function formatBlueprintMarkdown(bp: Record<string, unknown>): string {
+  const project = bp.project as Record<string, unknown> | undefined;
+  const design = bp.design as Record<string, unknown> | undefined;
+  const structure = bp.structure as Record<string, unknown> | undefined;
+
+  const name = project?.name ?? 'Untitled';
+  const type = project?.type ?? '';
+  const framework = project?.framework ?? project?.tech ?? '';
+
+  let md = `# Blueprint: ${name}\n`;
+  if (type || framework) {
+    const parts: string[] = [];
+    if (type) parts.push(`**Type**: ${type}`);
+    if (framework) parts.push(`**Tech**: ${framework}`);
+    md += parts.join(' | ') + '\n';
+  }
+
+  if (design) {
+    md += '\n## Design System\n';
+    const theme = design.theme ?? '';
+    const colors = design.colors as Record<string, unknown> | undefined;
+    if (theme) md += `- Theme: ${theme}\n`;
+    if (colors) {
+      const primary = colors.primary ?? '';
+      const secondary = colors.secondary ?? '';
+      if (primary) md += `- Primary: ${primary}\n`;
+      if (secondary) md += `- Secondary: ${secondary}\n`;
+    }
+  }
+
+  if (structure) {
+    const pages = structure.pages as unknown[] | undefined;
+    const components = structure.components as unknown[] | undefined;
+
+    if (pages && Array.isArray(pages)) {
+      md += '\n## Pages\n';
+      for (const page of pages) {
+        if (typeof page === 'string') {
+          md += `- ${page}\n`;
+        } else if (typeof page === 'object' && page !== null) {
+          const p = page as Record<string, unknown>;
+          md += `- ${p.name ?? p.path ?? JSON.stringify(page)}\n`;
+        }
+      }
+    }
+
+    if (components && Array.isArray(components)) {
+      md += '\n## Components\n';
+      for (const comp of components) {
+        if (typeof comp === 'string') {
+          md += `- ${comp}\n`;
+        } else if (typeof comp === 'object' && comp !== null) {
+          const c = comp as Record<string, unknown>;
+          md += `- ${c.name ?? JSON.stringify(comp)}\n`;
+        }
+      }
+    }
+  }
+
+  return md;
+}
+
+function renderBlueprintButton(
+  text: string,
+  onOpenSidebar?: (content: string) => void,
+) {
+  if (!onOpenSidebar) return nothing;
+
+  const blueprint = detectBlueprintJson(text);
+  if (!blueprint) return nothing;
+
+  const formatted = formatBlueprintMarkdown(blueprint);
+
+  return html`
+    <button
+      class="vibecode-blueprint-btn"
+      type="button"
+      @click=${() => onOpenSidebar(formatted)}
+    >
+      ${icons.fileText}
+      ${t().chat.vibecode.viewBlueprint}
+    </button>
+  `;
+}
+
 function renderGroupedMessage(
   message: unknown,
   opts: { isStreaming: boolean; showReasoning: boolean },
@@ -279,6 +383,7 @@ function renderGroupedMessage(
           ? html`<div class="chat-text">${unsafeHTML(toSanitizedMarkdownHtml(markdown))}</div>`
           : nothing
       }
+      ${markdown && role === 'assistant' ? renderBlueprintButton(markdown, onOpenSidebar) : nothing}
       ${toolCards.map((card) => renderToolCardSidebar(card, onOpenSidebar))}
     </div>
   `;

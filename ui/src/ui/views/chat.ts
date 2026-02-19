@@ -1,5 +1,5 @@
-import { html, nothing } from "lit";
-import { ref } from "lit/directives/ref.js";
+import { html, nothing, type TemplateResult } from "lit";
+import { ref, createRef } from "lit/directives/ref.js";
 import { repeat } from "lit/directives/repeat.js";
 import type { SessionsListResult } from "../types";
 import type { ChatAttachment, ChatQueueItem } from "../ui-types";
@@ -14,6 +14,9 @@ import {
 } from "../chat/grouped-render";
 import { renderMarkdownSidebar } from "./markdown-sidebar";
 import "../components/resizable-divider";
+import { renderAgentTabs, type AgentTabsProps } from "../components/agent-tabs";
+import type { AgentTab, AgentPreset } from "../controllers/agent-tabs";
+import { renderSplitView } from "../components/split-view";
 
 export type CompactionIndicatorStatus = {
   active: boolean;
@@ -78,14 +81,20 @@ export type ChatProps = {
   onSelectProvider?: (provider: string) => void;
   // API keys per provider
   apiKeys?: Record<string, string>;
-  apiKeySaveMode?: 'temp' | 'permanent';
   onApiKeyChange?: (provider: string, key: string) => void;
-  onApiKeySaveModeChange?: (mode: 'temp' | 'permanent') => void;
-  onSaveApiKey?: (provider: string, key: string, permanent: boolean) => void;
-  // Voice recording
+  onSaveApiKey?: (provider: string, key: string) => void;
+  apiKeySaveStatus?: 'idle' | 'saving' | 'saved' | 'error';
+  apiKeyInputOpen?: boolean;
+  onToggleApiKeyInput?: () => void;
+  // Voice input & TTS
   isRecording?: boolean;
-  onStartRecording?: () => void;
-  onStopRecording?: () => void;
+  voiceSupported?: boolean;
+  voiceInterimTranscript?: string;
+  voiceMode?: "idle" | "listening" | "speaking";
+  ttsEnabled?: boolean;
+  ttsSupported?: boolean;
+  onToggleVoice?: () => void;
+  onToggleTts?: () => void;
   // Quick actions
   quickActions?: QuickAction[];
   onQuickAction?: (action: QuickAction) => void;
@@ -101,6 +110,26 @@ export type ChatProps = {
   onCloseSidebar?: () => void;
   onSplitRatioChange?: (ratio: number) => void;
   onChatScroll?: (event: Event) => void;
+  // Agent tabs
+  agentTabs?: AgentTab[];
+  activeTabSessionKey?: string;
+  agentPresetPickerOpen?: boolean;
+  onTabSelect?: (sessionKey: string) => void;
+  onTabClose?: (sessionKey: string) => void;
+  onTabRename?: (sessionKey: string, label: string) => void;
+  onNewTab?: () => void;
+  onPresetSelect?: (preset: AgentPreset) => void;
+  onPresetPickerClose?: () => void;
+  // Split view (dual-pane)
+  onTabPin?: (sessionKey: string) => void;
+  onTabUnpin?: (sessionKey: string) => void;
+  splitActive?: boolean;
+  splitViewRatio?: number;
+  focusedPane?: "left" | "right";
+  pinnedTabs?: AgentTab[];
+  onSplitResize?: (ratio: number) => void;
+  onPaneFocus?: (pane: "left" | "right") => void;
+  renderPaneChat?: (sessionKey: string) => TemplateResult;
 };
 
 const COMPACTION_TOAST_DURATION_MS = 5000;
@@ -137,29 +166,32 @@ function renderCompactionIndicator(status: CompactionIndicatorStatus | null | un
   return nothing;
 }
 
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5 MB
+const ACCEPTED_TYPES = "image/*,.pdf,.txt,.csv,.json,.md";
+
 function generateAttachmentId(): string {
   return `att-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
 }
 
-function handlePaste(e: ClipboardEvent, props: ChatProps) {
-  const items = e.clipboardData?.items;
-  if (!items || !props.onAttachmentsChange) return;
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
 
-  const imageItems: DataTransferItem[] = [];
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
-    if (item.type.startsWith("image/")) {
-      imageItems.push(item);
+function isImageMime(mime: string): boolean {
+  return mime.startsWith("image/");
+}
+
+function processFiles(files: FileList | File[], props: ChatProps) {
+  if (!props.onAttachmentsChange) return;
+
+  for (const file of Array.from(files)) {
+    if (file.size > MAX_FILE_SIZE) {
+      props.onAttachmentsChange?.([...(props.attachments ?? [])]);
+      alert(t().chat.fileTooLarge);
+      continue;
     }
-  }
-
-  if (imageItems.length === 0) return;
-
-  e.preventDefault();
-
-  for (const item of imageItems) {
-    const file = item.getAsFile();
-    if (!file) continue;
 
     const reader = new FileReader();
     reader.onload = () => {
@@ -168,6 +200,7 @@ function handlePaste(e: ClipboardEvent, props: ChatProps) {
         id: generateAttachmentId(),
         dataUrl,
         mimeType: file.type,
+        fileName: file.name,
       };
       const current = props.attachments ?? [];
       props.onAttachmentsChange?.([...current, newAttachment]);
@@ -176,20 +209,68 @@ function handlePaste(e: ClipboardEvent, props: ChatProps) {
   }
 }
 
+function handlePaste(e: ClipboardEvent, props: ChatProps) {
+  const items = e.clipboardData?.items;
+  if (!items || !props.onAttachmentsChange) return;
+
+  const fileItems: DataTransferItem[] = [];
+  for (let i = 0; i < items.length; i++) {
+    const item = items[i];
+    if (item.kind === "file" && (item.type.startsWith("image/") || item.type === "application/pdf")) {
+      fileItems.push(item);
+    }
+  }
+
+  if (fileItems.length === 0) return;
+
+  e.preventDefault();
+
+  const files: File[] = [];
+  for (const item of fileItems) {
+    const file = item.getAsFile();
+    if (file) files.push(file);
+  }
+  processFiles(files, props);
+}
+
+function truncateFileName(name: string, max = 18): string {
+  if (name.length <= max) return name;
+  const ext = name.lastIndexOf(".");
+  if (ext > 0 && name.length - ext <= 6) {
+    const suffix = name.slice(ext);
+    return name.slice(0, max - suffix.length - 1) + "\u2026" + suffix;
+  }
+  return name.slice(0, max - 1) + "\u2026";
+}
+
 function renderAttachmentPreview(props: ChatProps) {
   const attachments = props.attachments ?? [];
   if (attachments.length === 0) return nothing;
 
   return html`
     <div class="chat-attachments">
-      ${attachments.map(
-        (att) => html`
-          <div class="chat-attachment">
-            <img
-              src=${att.dataUrl}
-              alt="${t().chat.attachmentPreview}"
-              class="chat-attachment__img"
-            />
+      ${attachments.map((att) => {
+        const isImage = isImageMime(att.mimeType);
+        // Estimate raw size from base64 data URL
+        const base64Start = att.dataUrl.indexOf(",");
+        const base64Len = base64Start > 0 ? att.dataUrl.length - base64Start - 1 : 0;
+        const fileSize = Math.round((base64Len * 3) / 4);
+
+        return html`
+          <div class="chat-attachment ${isImage ? "" : "chat-attachment--file"}">
+            ${isImage
+              ? html`<img
+                  src=${att.dataUrl}
+                  alt="${t().chat.attachmentPreview}"
+                  class="chat-attachment__img"
+                />`
+              : html`
+                  <div class="chat-attachment__file-info">
+                    <span class="chat-attachment__file-icon">${icons.fileText}</span>
+                    <span class="chat-attachment__file-name">${truncateFileName(att.fileName ?? "file")}</span>
+                    <span class="chat-attachment__file-size">${formatFileSize(fileSize)}</span>
+                  </div>
+                `}
             <button
               class="chat-attachment__remove"
               type="button"
@@ -202,14 +283,15 @@ function renderAttachmentPreview(props: ChatProps) {
               ${icons.x}
             </button>
           </div>
-        `,
-      )}
+        `;
+      })}
     </div>
   `;
 }
 
 function getDefaultQuickActions(): QuickAction[] {
   return [
+    { id: 'build', label: t().chat.quickActions.build, icon: 'zap', prompt: '/build' },
     { id: 'code', label: t().chat.quickActions.code, icon: 'code', prompt: '' },
     { id: 'write', label: t().chat.quickActions.write, icon: 'penLine', prompt: '' },
     { id: 'create', label: t().chat.quickActions.create, icon: 'sparkles', prompt: '' },
@@ -243,6 +325,139 @@ function renderQuickActions(props: ChatProps) {
           </button>
         `,
       )}
+    </div>
+  `;
+}
+
+type VibecodeTemplate = {
+  id: string;
+  label: string;
+  icon: keyof typeof icons;
+  prompt: string;
+};
+
+function getVibecodeTemplates(): VibecodeTemplate[] {
+  return [
+    { id: 'landing', label: t().chat.vibecode.landing, icon: 'monitor', prompt: '/build quick landing' },
+    { id: 'saas', label: t().chat.vibecode.saas, icon: 'code', prompt: '/build quick saas' },
+    { id: 'dashboard', label: t().chat.vibecode.dashboard, icon: 'barChart', prompt: '/build quick dashboard' },
+    { id: 'blog', label: t().chat.vibecode.blog, icon: 'fileText', prompt: '/build quick blog' },
+    { id: 'portfolio', label: t().chat.vibecode.portfolio, icon: 'sparkles', prompt: '/build quick portfolio' },
+  ];
+}
+
+function renderVibecodeQuickStart(props: ChatProps) {
+  if (props.draft.trim().length > 0) return nothing;
+  if (!props.connected) return nothing;
+
+  const templates = getVibecodeTemplates();
+
+  return html`
+    <div class="vibecode-templates">
+      <div class="vibecode-templates-label">${t().chat.vibecode.quickStart}</div>
+      ${templates.map(
+        (tpl) => html`
+          <button
+            class="vibecode-template-btn"
+            type="button"
+            ?disabled=${!props.connected}
+            @click=${() => {
+              if (props.onQuickAction) {
+                props.onQuickAction({ id: tpl.id, label: tpl.label, icon: tpl.icon, prompt: tpl.prompt });
+              }
+            }}
+          >
+            <span class="vibecode-template-btn__icon">${icons[tpl.icon]}</span>
+            ${tpl.label}
+          </button>
+        `,
+      )}
+    </div>
+  `;
+}
+
+type VibecodeStep = 'vision' | 'context' | 'blueprint' | 'contract' | 'build' | 'refine';
+
+const VIBECODE_STEPS: VibecodeStep[] = ['vision', 'context', 'blueprint', 'contract', 'build', 'refine'];
+
+function detectVibecodeStep(messages: unknown[]): VibecodeStep | null {
+  if (!Array.isArray(messages) || messages.length === 0) return null;
+
+  let foundBuild = false;
+  let latestStep: VibecodeStep | null = null;
+
+  for (let i = messages.length - 1; i >= 0; i--) {
+    const msg = messages[i] as Record<string, unknown>;
+    const role = typeof msg.role === 'string' ? msg.role.toLowerCase() : '';
+    const content = typeof msg.content === 'string' ? msg.content : '';
+    const contentArr = Array.isArray(msg.content) ? msg.content : [];
+
+    let text = content;
+    if (!text && contentArr.length > 0) {
+      for (const block of contentArr) {
+        const b = block as Record<string, unknown>;
+        if (b.type === 'text' && typeof b.text === 'string') {
+          text += b.text + ' ';
+        }
+      }
+    }
+
+    if (role === 'user' && /\/build/i.test(text)) {
+      foundBuild = true;
+    }
+
+    if (!foundBuild) continue;
+    if (latestStep) continue;
+
+    if (/verification|Verification/i.test(text)) {
+      latestStep = 'refine';
+    } else if (/npm run dev|da tao xong|đã tạo xong|hoàn thành.*build/i.test(text)) {
+      latestStep = 'build';
+    } else if (/Reply "OK"|Dong y|Đồng ý|xac nhan|xác nhận.*blueprint/i.test(text)) {
+      latestStep = 'contract';
+    } else if (/BLUEPRINT|blueprint.*json/i.test(text) && (role === 'assistant' || role === 'system')) {
+      latestStep = 'blueprint';
+    } else if (/DIEU CHINH|ĐIỀU CHỈNH|GIU NGUYEN|GIỮ NGUYÊN|thay doi|thay đổi.*layout/i.test(text)) {
+      latestStep = 'context';
+    } else if (/PROJECT TYPE|LAYOUT|loai du an|loại dự án/i.test(text) && (role === 'assistant' || role === 'system')) {
+      latestStep = 'vision';
+    }
+  }
+
+  if (foundBuild && !latestStep) {
+    latestStep = 'vision';
+  }
+
+  return foundBuild ? latestStep : null;
+}
+
+function renderVibecodeProgress(step: VibecodeStep | null) {
+  if (!step) return nothing;
+
+  const steps = t().chat.vibecode.steps;
+  const stepLabels: Record<VibecodeStep, string> = {
+    vision: steps.vision,
+    context: steps.context,
+    blueprint: steps.blueprint,
+    contract: steps.contract,
+    build: steps.build,
+    refine: steps.refine,
+  };
+
+  const activeIndex = VIBECODE_STEPS.indexOf(step);
+
+  return html`
+    <div class="vibecode-progress">
+      <span class="vibecode-progress-label">${t().chat.vibecode.buildingWith}</span>
+      ${VIBECODE_STEPS.map((s, i) => {
+        const state = i < activeIndex ? 'completed' : i === activeIndex ? 'active' : 'pending';
+        return html`
+          <span class="vibecode-step vibecode-step--${state}">
+            <span class="vibecode-step__label">${stepLabels[s]}</span>
+            ${i < VIBECODE_STEPS.length - 1 ? html`<span class="vibecode-step__arrow">→</span>` : nothing}
+          </span>
+        `;
+      })}
     </div>
   `;
 }
@@ -307,9 +522,6 @@ function renderModelSelectorDropdown(props: ChatProps) {
   const models = props.availableModels ?? DEFAULT_MODELS;
   const groupedModels = groupModelsByProvider(models);
   const selectedProvider = props.selectedProvider || 'anthropic';
-  const apiKeys = props.apiKeys || {};
-  const saveMode = props.apiKeySaveMode || 'temp';
-  const currentKey = apiKeys[selectedProvider] || '';
 
   // Filter models by selected provider
   const filteredModels = models.filter((m) => m.provider === selectedProvider);
@@ -342,66 +554,6 @@ function renderModelSelectorDropdown(props: ChatProps) {
         )}
       </div>
 
-      <!-- API Key input for selected provider -->
-      <div class="model-api-key-section">
-        <div class="model-api-key-header">
-          <label class="model-api-key-label">${t().chat.apiKey}</label>
-          <div class="model-api-key-save-toggle">
-            <button
-              class="save-mode-btn ${saveMode === 'temp' ? 'active' : ''}"
-              type="button"
-              title="${t().chat.saveTemp}"
-              @click=${() => props.onApiKeySaveModeChange?.('temp')}
-            >
-              ${t().chat.tempLabel}
-            </button>
-            <button
-              class="save-mode-btn ${saveMode === 'permanent' ? 'active' : ''}"
-              type="button"
-              title="${t().chat.savePerm}"
-              @click=${() => props.onApiKeySaveModeChange?.('permanent')}
-            >
-              ${t().chat.permLabel}
-            </button>
-          </div>
-        </div>
-        <div class="model-api-key-input-wrapper">
-          <input
-            type="password"
-            class="model-api-key-input"
-            placeholder=${PROVIDER_KEY_PLACEHOLDERS[selectedProvider] || 'Enter API key...'}
-            .value=${currentKey}
-            @input=${(e: Event) => {
-              const target = e.target as HTMLInputElement;
-              props.onApiKeyChange?.(selectedProvider, target.value);
-            }}
-            @keydown=${(e: KeyboardEvent) => {
-              if (e.key === 'Enter' && currentKey.trim()) {
-                props.onSaveApiKey?.(selectedProvider, currentKey, saveMode === 'permanent');
-              }
-            }}
-          />
-        </div>
-        <button
-          class="model-api-key-save-btn"
-          type="button"
-          ?disabled=${!currentKey.trim()}
-          @click=${() => {
-            if (currentKey.trim()) {
-              props.onSaveApiKey?.(selectedProvider, currentKey, saveMode === 'permanent');
-              props.onToggleModelSelector?.();
-            }
-          }}
-        >
-          ${icons.check} ${t().common.save}
-        </button>
-        <div class="model-api-key-hint">
-          ${saveMode === 'permanent'
-            ? t().chat.saveToAuthProfiles
-            : t().chat.saveSessionOnly}
-        </div>
-      </div>
-
       <!-- Filtered models list -->
       <div class="model-selector-list">
         ${filteredModels.map(
@@ -426,6 +578,74 @@ function renderModelSelectorDropdown(props: ChatProps) {
     </div>
   `;
 }
+
+function renderApiKeyBanner(props: ChatProps) {
+  const selectedProvider = props.selectedProvider || 'anthropic';
+  const apiKeys = props.apiKeys || {};
+  const currentKey = apiKeys[selectedProvider] || '';
+  const saveStatus = props.apiKeySaveStatus || 'idle';
+
+  // Auto-show: no messages + no key for selected provider, OR user toggled it open
+  const hasKey = Boolean(currentKey.trim());
+  const isFirstTime = props.messages.length === 0 && !hasKey;
+  const shouldShow = isFirstTime || props.apiKeyInputOpen;
+
+  if (!shouldShow) return nothing;
+
+  return html`
+    <div class="api-key-banner">
+      <div class="api-key-banner__title">
+        ${icons.key}
+        <span>${isFirstTime && !props.apiKeyInputOpen ? t().chat.apiKeyNeeded : t().chat.configureApiKey}</span>
+      </div>
+      <div class="api-key-banner__row">
+        <input
+          type="password"
+          class="api-key-banner__input"
+          placeholder=${PROVIDER_KEY_PLACEHOLDERS[selectedProvider] || 'Enter API key...'}
+          .value=${currentKey}
+          @input=${(e: Event) => {
+            const target = e.target as HTMLInputElement;
+            props.onApiKeyChange?.(selectedProvider, target.value);
+          }}
+          @keydown=${(e: KeyboardEvent) => {
+            if (e.key === 'Enter' && currentKey.trim()) {
+              props.onSaveApiKey?.(selectedProvider, currentKey);
+            }
+          }}
+        />
+        <button
+          class="api-key-banner__save-btn ${saveStatus === 'saving' ? 'saving' : saveStatus === 'saved' ? 'saved' : saveStatus === 'error' ? 'error' : ''}"
+          type="button"
+          ?disabled=${!currentKey.trim() || saveStatus === 'saving'}
+          @click=${() => {
+            if (currentKey.trim()) {
+              props.onSaveApiKey?.(selectedProvider, currentKey);
+            }
+          }}
+        >
+          ${saveStatus === 'saving'
+            ? icons.loader
+            : saveStatus === 'saved'
+              ? icons.check
+              : nothing}
+          ${PROVIDER_LABELS[selectedProvider] || selectedProvider}
+        </button>
+      </div>
+      <div class="api-key-banner__hint ${saveStatus === 'saved' ? 'hint--success' : saveStatus === 'error' ? 'hint--error' : ''}">
+        ${saveStatus === 'saved'
+          ? t().chat.apiKeySaved
+          : saveStatus === 'error'
+            ? t().chat.apiKeySaveError
+            : saveStatus === 'saving'
+              ? t().chat.apiKeySaving
+              : t().chat.saveToGateway}
+      </div>
+    </div>
+  `;
+}
+
+const fileInputRef = createRef<HTMLInputElement>();
 
 export function renderChat(props: ChatProps) {
   const canCompose = props.connected;
@@ -502,6 +722,8 @@ export function renderChat(props: ChatProps) {
 
       ${renderCompactionIndicator(props.compactionStatus)}
 
+      ${renderVibecodeProgress(detectVibecodeStep(props.messages))}
+
       ${
         props.focusMode
           ? html`
@@ -518,6 +740,33 @@ export function renderChat(props: ChatProps) {
           : nothing
       }
 
+      ${props.agentTabs && props.agentTabs.length > 0 && props.onTabSelect
+        ? renderAgentTabs({
+            tabs: props.agentTabs,
+            activeSessionKey: props.activeTabSessionKey ?? props.sessionKey,
+            connected: props.connected,
+            presetPickerOpen: props.agentPresetPickerOpen ?? false,
+            onTabSelect: props.onTabSelect,
+            onTabClose: props.onTabClose ?? (() => {}),
+            onTabRename: props.onTabRename ?? (() => {}),
+            onNewTab: props.onNewTab ?? (() => {}),
+            onPresetSelect: props.onPresetSelect ?? (() => {}),
+            onPresetPickerClose: props.onPresetPickerClose ?? (() => {}),
+            onTabPin: props.onTabPin,
+            onTabUnpin: props.onTabUnpin,
+          })
+        : nothing}
+
+      ${props.splitActive && props.pinnedTabs && props.pinnedTabs.length === 2 && props.renderPaneChat
+        ? renderSplitView({
+            leftPane: props.renderPaneChat(props.pinnedTabs[0].sessionKey),
+            rightPane: props.renderPaneChat(props.pinnedTabs[1].sessionKey),
+            splitRatio: props.splitViewRatio ?? 0.5,
+            focusedPane: props.focusedPane ?? "left",
+            onResize: (ratio) => props.onSplitResize?.(ratio),
+            onPaneFocus: (pane) => props.onPaneFocus?.(pane),
+          })
+        : html`
       <div
         class="chat-split-container ${sidebarOpen ? "chat-split-container--open" : ""}"
       >
@@ -526,65 +775,64 @@ export function renderChat(props: ChatProps) {
           style="flex: ${sidebarOpen ? `0 0 ${splitRatio * 100}%` : "1 1 100%"}"
         >
           ${thread}
-        </div>
 
-        ${
-          sidebarOpen
-            ? html`
-              <resizable-divider
-                .splitRatio=${splitRatio}
-                @resize=${(e: CustomEvent) => props.onSplitRatioChange?.(e.detail.splitRatio)}
-              ></resizable-divider>
-              <div class="chat-sidebar">
-                ${renderMarkdownSidebar({
-                  content: props.sidebarContent ?? null,
-                  error: props.sidebarError ?? null,
-                  onClose: props.onCloseSidebar!,
-                  onViewRawText: () => {
-                    if (!props.sidebarContent || !props.onOpenSidebar) return;
-                    props.onOpenSidebar(`\`\`\`\n${props.sidebarContent}\n\`\`\``);
-                  },
-                })}
-              </div>
-            `
-            : nothing
-        }
-      </div>
+          ${
+            props.queue.length
+              ? html`
+                <div class="chat-queue" role="status" aria-live="polite">
+                  <div class="chat-queue__title">${t().chat.queued} (${props.queue.length})</div>
+                  <div class="chat-queue__list">
+                    ${props.queue.map(
+                      (item) => html`
+                        <div class="chat-queue__item">
+                          <div class="chat-queue__text">
+                            ${
+                              item.text ||
+                              (item.attachments?.length ? `${t().chat.image} (${item.attachments.length})` : "")
+                            }
+                          </div>
+                          <button
+                            class="btn chat-queue__remove"
+                            type="button"
+                            aria-label="${t().chat.removeQueued}"
+                            @click=${() => props.onQueueRemove(item.id)}
+                          >
+                            ${icons.x}
+                          </button>
+                        </div>
+                      `,
+                    )}
+                  </div>
+                </div>
+              `
+              : nothing
+          }
 
-      ${
-        props.queue.length
-          ? html`
-            <div class="chat-queue" role="status" aria-live="polite">
-              <div class="chat-queue__title">${t().chat.queued} (${props.queue.length})</div>
-              <div class="chat-queue__list">
-                ${props.queue.map(
-                  (item) => html`
-                    <div class="chat-queue__item">
-                      <div class="chat-queue__text">
-                        ${
-                          item.text ||
-                          (item.attachments?.length ? `${t().chat.image} (${item.attachments.length})` : "")
-                        }
-                      </div>
-                      <button
-                        class="btn chat-queue__remove"
-                        type="button"
-                        aria-label="${t().chat.removeQueued}"
-                        @click=${() => props.onQueueRemove(item.id)}
-                      >
-                        ${icons.x}
-                      </button>
-                    </div>
-                  `,
-                )}
-              </div>
-            </div>
-          `
-          : nothing
-      }
+          ${renderApiKeyBanner(props)}
 
-      <div class="chat-composer claude-style">
+          <div
+            class="chat-composer claude-style"
+            @dragover=${(e: DragEvent) => {
+              e.preventDefault();
+              (e.currentTarget as HTMLElement).classList.add("chat-composer--dragover");
+            }}
+            @dragleave=${(e: DragEvent) => {
+              (e.currentTarget as HTMLElement).classList.remove("chat-composer--dragover");
+            }}
+            @drop=${(e: DragEvent) => {
+              e.preventDefault();
+              (e.currentTarget as HTMLElement).classList.remove("chat-composer--dragover");
+              const files = e.dataTransfer?.files;
+              if (files && files.length > 0) {
+                processFiles(files, props);
+              }
+            }}
+          >
         ${renderAttachmentPreview(props)}
+
+        ${props.voiceInterimTranscript ? html`
+          <div class="voice-transcript">${props.voiceInterimTranscript}</div>
+        ` : nothing}
 
         <div class="composer-main">
           <textarea
@@ -613,59 +861,58 @@ export function renderChat(props: ChatProps) {
             <div class="composer-toolbar__left">
               <input
                 type="file"
-                id="composer-file-input"
-                accept="image/*"
+                ${ref(fileInputRef)}
+                accept=${ACCEPTED_TYPES}
                 multiple
                 style="display: none"
                 @change=${(e: Event) => {
                   const input = e.target as HTMLInputElement;
                   const files = input.files;
                   if (!files || !props.onAttachmentsChange) return;
-
-                  for (const file of Array.from(files)) {
-                    if (!file.type.startsWith("image/")) continue;
-                    const reader = new FileReader();
-                    reader.onload = () => {
-                      const dataUrl = reader.result as string;
-                      const newAttachment: ChatAttachment = {
-                        id: `att-${Date.now()}-${Math.random().toString(36).slice(2, 9)}`,
-                        dataUrl,
-                        mimeType: file.type,
-                      };
-                      const current = props.attachments ?? [];
-                      props.onAttachmentsChange?.([...current, newAttachment]);
-                    };
-                    reader.readAsDataURL(file);
-                  }
+                  processFiles(files, props);
                   input.value = '';
                 }}
               />
               <button
                 class="composer-icon-btn"
                 type="button"
-                title="${t().chat.attachImage}"
+                title="${t().chat.attachFile}"
                 ?disabled=${!props.connected}
                 @click=${() => {
-                  const input = document.getElementById('composer-file-input') as HTMLInputElement;
-                  input?.click();
+                  fileInputRef.value?.click();
                 }}
               >
                 ${icons.plus}
               </button>
+              ${props.voiceSupported !== false ? html`
               <button
-                class="composer-icon-btn ${props.isRecording ? 'recording' : ''}"
+                class="composer-icon-btn ${props.voiceMode === 'listening' ? 'recording' : props.voiceMode === 'speaking' ? 'speaking' : ''}"
                 type="button"
-                title="${props.isRecording ? t().chat.stopRecording : t().chat.voiceInput}"
+                title="${props.voiceMode === 'listening' ? t().chat.stopRecording : props.voiceMode === 'speaking' ? t().chat.voiceSpeaking : t().chat.voiceInput}"
                 ?disabled=${!props.connected}
-                @click=${() => {
-                  if (props.isRecording && props.onStopRecording) {
-                    props.onStopRecording();
-                  } else if (props.onStartRecording) {
-                    props.onStartRecording();
-                  }
-                }}
+                @click=${() => props.onToggleVoice?.()}
               >
-                ${icons.mic}
+                ${props.voiceMode === "speaking" ? icons.volume2 : icons.mic}
+              </button>
+              ` : nothing}
+              ${props.ttsSupported ? html`
+              <button
+                class="composer-icon-btn ${props.ttsEnabled ? 'tts-active' : ''}"
+                type="button"
+                title="${props.ttsEnabled ? t().chat.ttsOff : t().chat.ttsOn}"
+                ?disabled=${!props.connected}
+                @click=${() => props.onToggleTts?.()}
+              >
+                ${props.ttsEnabled ? icons.volume2 : icons.volumeX}
+              </button>
+              ` : nothing}
+              <button
+                class="composer-icon-btn"
+                type="button"
+                title="${t().chat.configureApiKey}"
+                @click=${() => props.onToggleApiKeyInput?.()}
+              >
+                ${icons.key}
               </button>
             </div>
 
@@ -693,8 +940,37 @@ export function renderChat(props: ChatProps) {
           </div>
         </div>
 
+        ${renderQuickActions(props)}
+
+        ${renderVibecodeQuickStart(props)}
+
         ${props.showModelSelector ? renderModelSelectorDropdown(props) : nothing}
+          </div>
+        </div>
+
+        ${
+          sidebarOpen
+            ? html`
+              <resizable-divider
+                .splitRatio=${splitRatio}
+                @resize=${(e: CustomEvent) => props.onSplitRatioChange?.(e.detail.splitRatio)}
+              ></resizable-divider>
+              <div class="chat-sidebar">
+                ${renderMarkdownSidebar({
+                  content: props.sidebarContent ?? null,
+                  error: props.sidebarError ?? null,
+                  onClose: props.onCloseSidebar!,
+                  onViewRawText: () => {
+                    if (!props.sidebarContent || !props.onOpenSidebar) return;
+                    props.onOpenSidebar(`\`\`\`\n${props.sidebarContent}\n\`\`\``);
+                  },
+                })}
+              </div>
+            `
+            : nothing
+        }
       </div>
+    `}
     </section>
   `;
 }
